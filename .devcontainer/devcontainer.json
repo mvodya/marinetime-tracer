@@ -1,0 +1,6 @@
+{
+	"name": "Marine Traffic Collector DEV",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
+}
