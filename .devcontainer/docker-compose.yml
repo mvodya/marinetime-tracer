@@ -7,7 +7,7 @@ services:
       dockerfile: .devcontainer/Dockerfile
     volumes:
       - ../..:/workspaces:cached
-      - ~/.ssh:/home/vscode/.ssh:ro
+      - ~/.ssh:/home/vscode/.ssh
     command: sleep infinity
     links:
       - db
