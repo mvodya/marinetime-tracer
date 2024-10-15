@@ -1,2 +1,3 @@
 seleniumbase==4.31.6
 psycopg2==2.9.9
+tqdm==-4.66.5
