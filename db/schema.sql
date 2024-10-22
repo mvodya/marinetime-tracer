@@ -204,7 +204,8 @@ CREATE TABLE public.positions (
     dwt integer,
     type smallint,
     gt_type smallint,
-    parse_id integer
+    parse_id integer,
+    destination character varying
 );
 
 
@@ -319,7 +320,7 @@ CREATE TABLE public.ships (
     flag_id integer,
     width smallint,
     l_fore smallint,
-    w_fore smallint,
+    w_left smallint,
     length smallint
 );
 
@@ -376,10 +377,10 @@ COMMENT ON COLUMN public.ships.l_fore IS 'Расстояние от носа с�
 
 
 --
--- Name: COLUMN ships.w_fore; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN ships.w_left; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ships.w_fore IS 'Расстояние от осевой линии судна до левого борта (в метрах)';
+COMMENT ON COLUMN public.ships.w_left IS 'Расстояние от осевой линии судна до левого борта (в метрах)';
 
 
 --
@@ -522,6 +523,14 @@ ALTER TABLE ONLY public.ships
 
 ALTER TABLE ONLY public.destinations
     ADD CONSTRAINT destinations_port_id_fkey FOREIGN KEY (port_id) REFERENCES public.ports(id) ON UPDATE CASCADE ON DELETE SET NULL NOT VALID;
+
+
+--
+-- Name: positions positions_destination_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.positions
+    ADD CONSTRAINT positions_destination_fkey FOREIGN KEY (destination) REFERENCES public.destinations(name) ON UPDATE CASCADE ON DELETE SET NULL NOT VALID;
 
 
 --
