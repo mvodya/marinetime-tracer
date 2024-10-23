@@ -1,4 +1,16 @@
 {
   "python.languageServer": "Pylance",
-  "remote.autoForwardPorts": false
+  "remote.autoForwardPorts": false,
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "db",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "database",
+      "database": "postgres",
+      "username": "postgres",
+      "password": "postgres"
+    }
+  ]
 }
