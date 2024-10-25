@@ -3,6 +3,7 @@ from seleniumbase import Driver
 import json
 import re
 from tqdm import tqdm
+from datetime import datetime
 
 def mtRunner(positions):
     output = []
@@ -80,6 +81,7 @@ def shipRawParser(raw):
                 data["z"] = z
                 data["x"] = x
                 data["y"] = y
+                data["timestamp"] = datetime.now().timestamp()
 
                 data["data"] = row
 
@@ -92,9 +94,10 @@ def shipDataParser(shipData):
 
   for data in tqdm(shipData):
     ship = {} | data["data"]
-    ship["TILE_X"] = data["x"]
-    ship["TILE_Y"] = data["y"]
+    # ship["TILE_X"] = data["x"]
+    # ship["TILE_Y"] = data["y"]
     ship["TILE_Z"] = data["z"]
+    ship["TIMESTAMP"] = data["timestamp"] - (float(ship["ELAPSED"]) if ship["ELAPSED"] else 0)
 
     id = data["data"]["SHIP_ID"]
 
@@ -127,5 +130,5 @@ ships = shipDataParser(data)
 print(f"Parsed ships: {len(ships)}")
 
 # Save output
-with open('ships.json', 'w') as f:
+with open('data.json', 'w') as f:
     json.dump(ships, f)
