@@ -75,6 +75,7 @@ except Exception as e:
   conn.rollback()
   print(f"Error processing: {e}")
 
+description = os.environ.get('DESCRIPTION', 'UNKNOWN')
 
 # Register parse event
 try:
@@ -87,7 +88,7 @@ try:
     d = {
         'start': df['TIMESTAMP'].min(),
         'end': df['TIMESTAMP'].max(),
-        'description': 'TEST PARSER WS-MARK',
+        'description': f'{description}',
     }
     cursor.execute(insert_query, d)
     parses_id = cursor.fetchone()[0]
