@@ -97,7 +97,8 @@ CREATE TABLE public.parses (
     id integer NOT NULL,
     start timestamp with time zone NOT NULL,
     "end" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    description character varying(200)
+    description character varying(200),
+    created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -132,6 +133,13 @@ COMMENT ON COLUMN public.parses.description IS 'Описание парсера 
 
 
 --
+-- Name: COLUMN parses.created_date; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.parses.created_date IS 'Время добавления записи в БД';
+
+
+--
 -- Name: parses_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -154,41 +162,6 @@ ALTER SEQUENCE public.parses_id_seq OWNED BY public.parses.id;
 
 
 --
--- Name: ports; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.ports (
-    id integer NOT NULL,
-    name character varying(200),
-    location point
-);
-
-
-ALTER TABLE public.ports OWNER TO postgres;
-
---
--- Name: ports_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.ports_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.ports_id_seq OWNER TO postgres;
-
---
--- Name: ports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.ports_id_seq OWNED BY public.ports.id;
-
-
---
 -- Name: positions; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -205,7 +178,8 @@ CREATE TABLE public.positions (
     type smallint,
     gt_type smallint,
     parse_id integer,
-    destination character varying
+    destination character varying,
+    created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -286,6 +260,81 @@ COMMENT ON COLUMN public.positions.type IS 'Общий тип судна';
 --
 
 COMMENT ON COLUMN public.positions.gt_type IS 'Расширенный код';
+
+
+--
+-- Name: COLUMN positions.created_date; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.positions.created_date IS 'Время добавления записи в БД';
+
+
+--
+-- Name: parses_stats; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.parses_stats AS
+ SELECT id,
+    description,
+    ("end" - start) AS frame,
+    created_date,
+    ( SELECT count(*) AS count
+           FROM public.positions
+          WHERE (positions.parse_id = parses.id)) AS positions_count,
+    (( SELECT positions.created_date
+           FROM public.positions
+          WHERE (positions.parse_id = parses.id)
+          ORDER BY positions.created_date DESC
+         LIMIT 1) - ( SELECT positions.created_date
+           FROM public.positions
+          WHERE (positions.parse_id = parses.id)
+          ORDER BY positions.created_date
+         LIMIT 1)) AS parse_duration
+   FROM public.parses;
+
+
+ALTER VIEW public.parses_stats OWNER TO postgres;
+
+--
+-- Name: VIEW parses_stats; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON VIEW public.parses_stats IS 'Statistics of parses iterations';
+
+
+--
+-- Name: ports; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ports (
+    id integer NOT NULL,
+    name character varying(200),
+    location point
+);
+
+
+ALTER TABLE public.ports OWNER TO postgres;
+
+--
+-- Name: ports_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.ports_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.ports_id_seq OWNER TO postgres;
+
+--
+-- Name: ports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.ports_id_seq OWNED BY public.ports.id;
 
 
 --
