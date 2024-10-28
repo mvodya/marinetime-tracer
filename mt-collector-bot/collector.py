@@ -147,7 +147,7 @@ with open('positions.json', 'r') as file:
 print(f'Positions count: {len(positions)}')
 
 # Start parser runner
-raw = mtRunner(positions[:3])
+raw = mtRunner(positions)
 print(f"Raw data rows: {len(raw)}")
 
 # Parse raw data
