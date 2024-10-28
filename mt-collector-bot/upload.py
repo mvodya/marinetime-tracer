@@ -81,13 +81,13 @@ description = os.environ.get('DESCRIPTION', 'UNKNOWN')
 try:
   with conn.cursor() as cursor:
     insert_query = """
-      INSERT INTO parses (start, "end", description)
-      VALUES (%(start)s, %(end)s, %(description)s)
+      INSERT INTO parses (parse_start, parse_end, description)
+      VALUES (%(parse_start)s, %(parse_end)s, %(description)s)
       RETURNING id
     """
     d = {
-        'start': df['TIMESTAMP'].min(),
-        'end': df['TIMESTAMP'].max(),
+        'parse_start': df['TIMESTAMP'].min(),
+        'parse_end': df['TIMESTAMP'].max(),
         'description': f'{description}',
     }
     cursor.execute(insert_query, d)
@@ -125,12 +125,12 @@ try:
       else:
         ship_id = ship[0]
       insert_query = """
-          INSERT INTO positions (ship_id, timestamp, location, speed, course, heading, rot, dwt, type, gt_type, parse_id, destination)
-          VALUES (%(ship_id)s, %(timestamp)s, %(location)s, %(speed)s, %(course)s, %(heading)s, %(rot)s, %(dwt)s, %(type)s, %(gt_type)s, %(parse_id)s, %(destination)s)
+          INSERT INTO positions (ship_id, parsed_date, location, speed, course, heading, rot, dwt, type, gt_type, parse_id, destination)
+          VALUES (%(ship_id)s, %(parsed_date)s, %(location)s, %(speed)s, %(course)s, %(heading)s, %(rot)s, %(dwt)s, %(type)s, %(gt_type)s, %(parse_id)s, %(destination)s)
         """
       d = {
           'ship_id': ship_id,
-          'timestamp': row['TIMESTAMP'],
+          'parsed_date': row['TIMESTAMP'],
           'location': f"({row['LAT']}, {row['LON']})",
           'speed': row['SPEED'],
           'course': row['COURSE'],
