@@ -27,7 +27,8 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.destinations (
     name character varying(100) NOT NULL,
-    port_id integer
+    port_id integer,
+    added_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -95,10 +96,10 @@ ALTER SEQUENCE public.flags_id_seq OWNED BY public.flags.id;
 
 CREATE TABLE public.parses (
     id integer NOT NULL,
-    start timestamp with time zone NOT NULL,
-    "end" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    parse_start timestamp with time zone NOT NULL,
+    parse_end timestamp with time zone NOT NULL,
     description character varying(200),
-    created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -112,17 +113,17 @@ COMMENT ON TABLE public.parses IS 'Информация о парсингах';
 
 
 --
--- Name: COLUMN parses.start; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN parses.parse_start; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.parses.start IS 'Время начала парсинга';
+COMMENT ON COLUMN public.parses.parse_start IS 'Время начала парсинга';
 
 
 --
--- Name: COLUMN parses."end"; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN parses.parse_end; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.parses."end" IS 'Время конца парсинга';
+COMMENT ON COLUMN public.parses.parse_end IS 'Время конца парсинга';
 
 
 --
@@ -168,7 +169,7 @@ ALTER SEQUENCE public.parses_id_seq OWNED BY public.parses.id;
 CREATE TABLE public.positions (
     id bigint NOT NULL,
     ship_id integer NOT NULL,
-    "timestamp" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    parsed_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     location point NOT NULL,
     speed smallint,
     course smallint,
@@ -177,9 +178,9 @@ CREATE TABLE public.positions (
     dwt integer,
     type smallint,
     gt_type smallint,
-    parse_id integer,
+    parse_id integer NOT NULL,
     destination character varying,
-    created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    added_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -200,10 +201,10 @@ COMMENT ON COLUMN public.positions.ship_id IS 'Судно';
 
 
 --
--- Name: COLUMN positions."timestamp"; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN positions.parsed_date; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.positions."timestamp" IS 'Время, когда судно было обнаружено';
+COMMENT ON COLUMN public.positions.parsed_date IS 'Время, когда судно было обнаружено и обработано парсером';
 
 
 --
@@ -263,10 +264,10 @@ COMMENT ON COLUMN public.positions.gt_type IS 'Расширенный код';
 
 
 --
--- Name: COLUMN positions.created_date; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN positions.added_date; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.positions.created_date IS 'Время добавления записи в БД';
+COMMENT ON COLUMN public.positions.added_date IS 'Время добавления записи в БД';
 
 
 --
@@ -276,20 +277,11 @@ COMMENT ON COLUMN public.positions.created_date IS 'Время добавлен�
 CREATE VIEW public.parses_stats AS
  SELECT id,
     description,
-    ("end" - start) AS frame,
+    (parse_end - parse_start) AS frame,
     created_date,
     ( SELECT count(*) AS count
            FROM public.positions
-          WHERE (positions.parse_id = parses.id)) AS positions_count,
-    (( SELECT positions.created_date
-           FROM public.positions
-          WHERE (positions.parse_id = parses.id)
-          ORDER BY positions.created_date DESC
-         LIMIT 1) - ( SELECT positions.created_date
-           FROM public.positions
-          WHERE (positions.parse_id = parses.id)
-          ORDER BY positions.created_date
-         LIMIT 1)) AS parse_duration
+          WHERE (positions.parse_id = parses.id)) AS positions_count
    FROM public.parses;
 
 
@@ -370,7 +362,8 @@ CREATE TABLE public.ships (
     width smallint,
     l_fore smallint,
     w_left smallint,
-    length smallint
+    length smallint,
+    added_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -437,6 +430,13 @@ COMMENT ON COLUMN public.ships.w_left IS 'Расстояние от осевой
 --
 
 COMMENT ON COLUMN public.ships.length IS 'Длина судна (в метрах)';
+
+
+--
+-- Name: COLUMN ships.added_date; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.ships.added_date IS 'Дата добавления записи в БД';
 
 
 --
@@ -587,7 +587,7 @@ ALTER TABLE ONLY public.positions
 --
 
 ALTER TABLE ONLY public.positions
-    ADD CONSTRAINT positions_parse_id_fkey FOREIGN KEY (parse_id) REFERENCES public.parses(id) ON UPDATE CASCADE ON DELETE SET NULL NOT VALID;
+    ADD CONSTRAINT positions_parse_id_fkey FOREIGN KEY (parse_id) REFERENCES public.parses(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
 --
