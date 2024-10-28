@@ -1,3 +1,4 @@
 data.json
 downloaded_files
 archive/*.json
+.env

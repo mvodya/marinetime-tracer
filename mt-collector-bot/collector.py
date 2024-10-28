@@ -5,6 +5,7 @@ import re
 from tqdm import tqdm
 from datetime import datetime
 
+
 def mtRunner(positions):
     output = []
     print("Open webdriver")
@@ -30,14 +31,23 @@ def mtRunner(positions):
     # Open marine traffic
     driver.open(
         "https://www.marinetraffic.com/en/ais/home/centerx:132.2/centery:43.0/zoom:10")
-    driver.wait_for_element('button:contains("AGREE")')
+    print("Wait for page loading (and GDPR notice)")
+    try:
+        driver.wait_for_element_visible('button:contains("AGREE")', timeout=20)
+    except Exception as e:
+        print("Second try to load page (reopening page)")
+        driver.open(
+            "https://www.marinetraffic.com/en/ais/home/centerx:132.2/centery:43.0/zoom:10")
+        driver.sleep(5)
+        print("Wait for page loading (and GDPR notice)")
+        driver.wait_for_element_visible('button:contains("AGREE")', timeout=20)
     driver.sleep(0.5)
-    print("Closed GDPR notice")
     # Close cookie notice
     try:
         driver.click('button:contains("AGREE")', timeout=3)
     except Exception as e:
         pass
+    print("GDPR notice is closed")
 
     # Foreach positions
     for pos in tqdm(positions):
@@ -64,6 +74,7 @@ def mtRunner(positions):
     print("Webdriver closed")
     return output
 
+
 def shipRawParser(raw):
     regex = r"z:(?P<z>\d+)\/X:(?P<x>\d+)\/Y:(?P<y>\d+)"
 
@@ -89,26 +100,28 @@ def shipRawParser(raw):
 
     return shipData
 
+
 def shipDataParser(shipData):
-  ships = {}
+    ships = {}
 
-  for data in tqdm(shipData):
-    ship = {} | data["data"]
-    # ship["TILE_X"] = data["x"]
-    # ship["TILE_Y"] = data["y"]
-    ship["TILE_Z"] = data["z"]
-    ship["TIMESTAMP"] = data["timestamp"] - (float(ship["ELAPSED"]) if ship["ELAPSED"] else 0)
+    for data in tqdm(shipData):
+        ship = {} | data["data"]
+        # ship["TILE_X"] = data["x"]
+        # ship["TILE_Y"] = data["y"]
+        ship["TILE_Z"] = data["z"]
+        ship["TIMESTAMP"] = data["timestamp"] - \
+            (float(ship["ELAPSED"]) if ship["ELAPSED"] else 0)
 
-    id = data["data"]["SHIP_ID"]
+        id = data["data"]["SHIP_ID"]
 
-    # Keep ship with highest Z value
-    if id in ships:
-      if int(ship["TILE_Z"]) > int(ships[id]["TILE_Z"]):
-        ships[id] = ship
-    else:
-      ships[id] = ship
+        # Keep ship with highest Z value
+        if id in ships:
+            if int(ship["TILE_Z"]) > int(ships[id]["TILE_Z"]):
+                ships[id] = ship
+        else:
+            ships[id] = ship
 
-  return ships
+    return ships
 
 
 # Load positions from file

@@ -6,7 +6,7 @@ from tqdm import tqdm
 import numpy as np
 from datetime import datetime
 
-conn = psycopg2.connect(f"dbname='{os.environ['POSTGRES_DB']}' user='{os.environ['POSTGRES_USER']}' host='{os.environ['POSTGRES_HOST']}' password='{os.environ['POSTGRES_PASSWORD']}'")
+conn = psycopg2.connect(f"dbname='{os.environ['POSTGRES_DB']}' user='{os.environ['POSTGRES_USER']}' host='{os.environ['POSTGRES_HOST']}' port='{os.environ['POSTGRES_PORT']}' password='{os.environ['POSTGRES_PASSWORD']}'")
 
 curs = conn.cursor()
 curs.execute("SELECT version()")

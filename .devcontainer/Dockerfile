@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/devcontainers/python:1-3.11-bullseye
 ENV PYTHONUNBUFFERED 1
 
 # Add repo for pg client
-RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
     && sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 
 # Update APT
