@@ -4,50 +4,59 @@ import json
 import re
 from tqdm import tqdm
 from datetime import datetime
-
+from selenium.webdriver.common.by import By
 
 def mtRunner(positions):
     output = []
     print("Open webdriver")
     driver = Driver(uc=True, uc_cdp_events=True, headless=True)
     raw = []
-    # Move to position
 
+    # Move to position
     def moveTo(pos):
         driver.execute_script(
             f"mtMap.setView({{'lon': {pos['lon']}, 'lat': {pos['lat']}}}, {pos['zoom']});")
-    # Handle traffic data
 
+    # Handle traffic data
     def save(data):
         req = {}
+        print(data)
         req["id"] = data["params"]["requestId"]
         req["path"] = data["params"]["headers"][":path"]
         if "/getData/" in req["path"]:
             raw.append(req)
+
+    # Open marine traffic
+    print("Open marine traffic")
+    driver.open(
+        "https://www.marinetraffic.com/en/ais/home/centerx:132.2/centery:43.0/zoom:10")
+    driver.sleep(3)
+
     # Listen traffic
     driver.add_cdp_listener('Network.requestWillBeSentExtraInfo', save)
 
-    print("Open marine traffic")
-    # Open marine traffic
-    driver.open(
-        "https://www.marinetraffic.com/en/ais/home/centerx:132.2/centery:43.0/zoom:10")
-    print("Wait for page loading (and GDPR notice)")
-    try:
-        driver.wait_for_element_visible('button:contains("AGREE")', timeout=20)
-    except Exception as e:
-        print("Second try to load page (reopening page)")
-        driver.open(
-            "https://www.marinetraffic.com/en/ais/home/centerx:132.2/centery:43.0/zoom:10")
-        driver.sleep(5)
-        print("Wait for page loading (and GDPR notice)")
-        driver.wait_for_element_visible('button:contains("AGREE")', timeout=20)
-    driver.sleep(0.5)
-    # Close cookie notice
-    try:
-        driver.click('button:contains("AGREE")', timeout=3)
-    except Exception as e:
-        pass
-    print("GDPR notice is closed")
+    for attempt in range(4):
+        driver.sleep(10)
+        if (not driver.is_element_present(By.XPATH, "//button[span='AGREE']")):
+            print(f"Button AGREE not found, attempt: {attempt + 1}")
+            if (attempt == 3):
+                raise Exception("Error for waiting GDRP notice")
+            driver.refresh()
+            continue
+        driver.click(By.XPATH, "//button[span='AGREE']")
+        break
+
+    # Wait map area
+    for attempt in range(4):
+        if (not driver.is_element_present(By.XPATH, "//div[@id='map_canvas']")):
+            print(f"Map area not found, attempt: {attempt}")
+            if (attempt == 3):
+                raise Exception("Error for waiting map area")
+            driver.refresh()
+            driver.sleep(10)
+            continue
+        driver.click(By.XPATH, "//div[@id='map_canvas']")
+        break
 
     # Foreach positions
     for pos in tqdm(positions):
@@ -131,7 +140,7 @@ with open('positions.json', 'r') as file:
 print(f'Positions count: {len(positions)}')
 
 # Start parser runner
-raw = mtRunner(positions)
+raw = mtRunner(positions[:3])
 print(f"Raw data rows: {len(raw)}")
 
 # Parse raw data
