@@ -9,7 +9,7 @@ from tqdm import tqdm
 import psycopg2.extras
 
 # Size of batches for DB inserting
-BATCH_SIZE = 500
+BATCH_SIZE = 100
 
 conn = psycopg2.connect(
     f"dbname='{os.environ['POSTGRES_DB']}' user='{os.environ['POSTGRES_USER']}' host='{os.environ['POSTGRES_HOST']}' port='{os.environ['POSTGRES_PORT']}' password='{os.environ['POSTGRES_PASSWORD']}'")
@@ -142,8 +142,23 @@ try:
                     'w_left': row['W_LEFT'],
                     'length': row['LENGTH']
                 })
-            else:
-                # If the ship already exists, use its ID for the position
+
+        with conn.cursor() as cursor:
+            # Insert new ships and retrieve their ids
+            if new_ships:
+                psycopg2.extras.execute_values(cursor, """
+                    INSERT INTO ships (ship_id, name, flag_id, width, l_fore, w_left, length)
+                    VALUES %s
+                    RETURNING ship_id, id
+                """, new_ships, template='(%(ship_id)s, %(shipname)s, %(flag_id)s, %(width)s, %(l_fore)s, %(w_left)s, %(length)s)')
+                inserted_rows = cursor.fetchall()
+
+                # Add new ship_id to the dictionary of existing ships with their ids
+                for ship_id, db_id in inserted_rows:
+                    existing_ships[ship_id] = db_id
+
+            for _, row in batch.iterrows():
+                ship_id = existing_ships.get(row['SHIP_ID'])
                 positions.append({
                     'ship_id': ship_id,
                     'parsed_date': row['TIMESTAMP'],
@@ -158,20 +173,6 @@ try:
                     'parse_id': parses_id,
                     'destination': row['DESTINATION']
                 })
-
-        with conn.cursor() as cursor:
-            # Insert new ships and retrieve their ids
-            if new_ships:
-                psycopg2.extras.execute_batch(cursor, """
-                    INSERT INTO ships (ship_id, name, flag_id, width, l_fore, w_left, length)
-                    VALUES (%(ship_id)s, %(shipname)s, %(flag_id)s, %(width)s, %(l_fore)s, %(w_left)s, %(length)s)
-                    RETURNING ship_id, id
-                """, new_ships)
-                cursor.execute("SELECT ship_id, id FROM ships")
-
-                # Add new ship_id to the dictionary of existing ships with their ids
-                for ship_id, db_id in cursor.fetchall():
-                    existing_ships[ship_id] = db_id
 
             # Insert all positions into the positions table
             psycopg2.extras.execute_batch(cursor, """
