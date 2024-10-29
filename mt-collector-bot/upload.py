@@ -173,24 +173,6 @@ try:
                 for ship_id, db_id in cursor.fetchall():
                     existing_ships[ship_id] = db_id
 
-            # Add positions for all ships
-            for _, row in batch.iterrows():
-                ship_id = existing_ships[row['SHIP_ID']]
-                positions.append({
-                    'ship_id': ship_id,
-                    'parsed_date': row['TIMESTAMP'],
-                    'location': f"({row['LAT']}, {row['LON']})",
-                    'speed': row['SPEED'],
-                    'course': row['COURSE'],
-                    'heading': row['HEADING'],
-                    'rot': row['ROT'],
-                    'dwt': row['DWT'],
-                    'type': row['SHIPTYPE'],
-                    'gt_type': row['GT_SHIPTYPE'],
-                    'parse_id': parses_id,
-                    'destination': row['DESTINATION']
-                })
-
             # Insert all positions into the positions table
             psycopg2.extras.execute_batch(cursor, """
                 INSERT INTO positions (ship_id, parsed_date, location, speed, course, heading, rot, dwt, type, gt_type, parse_id, destination)
