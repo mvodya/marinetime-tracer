@@ -567,6 +567,27 @@ ALTER TABLE ONLY public.ships
 
 
 --
+-- Name: idx_flags_flag; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_flags_flag ON public.flags USING btree (flag);
+
+
+--
+-- Name: idx_positions_ship_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_positions_ship_id ON public.positions USING btree (ship_id);
+
+
+--
+-- Name: idx_ships_ship_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_ships_ship_id ON public.ships USING btree (ship_id);
+
+
+--
 -- Name: destinations destinations_port_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -604,6 +625,134 @@ ALTER TABLE ONLY public.positions
 
 ALTER TABLE ONLY public.ships
     ADD CONSTRAINT ships_flag_id_fkey FOREIGN KEY (flag_id) REFERENCES public.flags(id) ON DELETE SET NULL;
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
+--
+
+GRANT USAGE ON SCHEMA public TO marinedb_parser;
+GRANT USAGE ON SCHEMA public TO marinedb_user;
+
+
+--
+-- Name: TABLE destinations; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.destinations TO marinedb_user;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.destinations TO marinedb_parser;
+
+
+--
+-- Name: TABLE flags; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.flags TO marinedb_user;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.flags TO marinedb_parser;
+
+
+--
+-- Name: SEQUENCE flags_id_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON SEQUENCE public.flags_id_seq TO marinedb_parser;
+GRANT SELECT,USAGE ON SEQUENCE public.flags_id_seq TO marinedb_user;
+
+
+--
+-- Name: TABLE parses; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.parses TO marinedb_user;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.parses TO marinedb_parser;
+
+
+--
+-- Name: SEQUENCE parses_id_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON SEQUENCE public.parses_id_seq TO marinedb_parser;
+GRANT SELECT,USAGE ON SEQUENCE public.parses_id_seq TO marinedb_user;
+
+
+--
+-- Name: TABLE positions; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.positions TO marinedb_user;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.positions TO marinedb_parser;
+
+
+--
+-- Name: TABLE parses_stats; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,UPDATE ON TABLE public.parses_stats TO marinedb_parser;
+GRANT SELECT ON TABLE public.parses_stats TO marinedb_user;
+
+
+--
+-- Name: TABLE ports; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,UPDATE ON TABLE public.ports TO marinedb_parser;
+GRANT SELECT ON TABLE public.ports TO marinedb_user;
+
+
+--
+-- Name: SEQUENCE ports_id_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON SEQUENCE public.ports_id_seq TO marinedb_parser;
+GRANT SELECT,USAGE ON SEQUENCE public.ports_id_seq TO marinedb_user;
+
+
+--
+-- Name: SEQUENCE positions_id_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON SEQUENCE public.positions_id_seq TO marinedb_parser;
+GRANT SELECT,USAGE ON SEQUENCE public.positions_id_seq TO marinedb_user;
+
+
+--
+-- Name: TABLE ships; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,UPDATE ON TABLE public.ships TO marinedb_parser;
+GRANT SELECT ON TABLE public.ships TO marinedb_user;
+
+
+--
+-- Name: SEQUENCE ships_flag_id_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON SEQUENCE public.ships_flag_id_seq TO marinedb_parser;
+GRANT SELECT,USAGE ON SEQUENCE public.ships_flag_id_seq TO marinedb_user;
+
+
+--
+-- Name: SEQUENCE ships_id_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON SEQUENCE public.ships_id_seq TO marinedb_parser;
+GRANT SELECT,USAGE ON SEQUENCE public.ships_id_seq TO marinedb_user;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO marinedb_parser;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT,USAGE ON SEQUENCES TO marinedb_user;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT,INSERT,UPDATE ON TABLES TO marinedb_parser;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT ON TABLES TO marinedb_user;
 
 
 --
