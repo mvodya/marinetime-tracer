@@ -17,6 +17,35 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: upsert_ship_position(character varying, text, integer, smallint, smallint, smallint, smallint, timestamp without time zone, point, smallint, smallint, smallint, smallint, integer, smallint, smallint, integer, character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.upsert_ship_position(p_ship_id character varying, p_shipname text, p_flag_id integer, p_width smallint, p_l_fore smallint, p_w_left smallint, p_length smallint, p_parsed_date timestamp without time zone, p_location point, p_speed smallint, p_course smallint, p_heading smallint, p_rot smallint, p_dwt integer, p_type smallint, p_gt_type smallint, p_parse_id integer, p_destination character varying) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    found_ship_id INTEGER;
+BEGIN
+    -- Check if the ship exists
+    SELECT id INTO found_ship_id FROM ships WHERE ship_id = p_ship_id LIMIT 1;
+
+    -- If the ship doesn't exist, insert it
+    IF found_ship_id IS NULL THEN
+        INSERT INTO ships (ship_id, name, flag_id, width, l_fore, w_left, length)
+        VALUES (p_ship_id, p_shipname, p_flag_id, p_width, p_l_fore, p_w_left, p_length)
+        RETURNING id INTO found_ship_id;
+    END IF;
+
+    -- Insert the position record
+    INSERT INTO positions (ship_id, parsed_date, location, speed, course, heading, rot, dwt, type, gt_type, parse_id, destination)
+    VALUES (found_ship_id, p_parsed_date, p_location, p_speed, p_course, p_heading, p_rot, p_dwt, p_type, p_gt_type, p_parse_id, p_destination);
+END;
+$$;
+
+
+ALTER FUNCTION public.upsert_ship_position(p_ship_id character varying, p_shipname text, p_flag_id integer, p_width smallint, p_l_fore smallint, p_w_left smallint, p_length smallint, p_parsed_date timestamp without time zone, p_location point, p_speed smallint, p_course smallint, p_heading smallint, p_rot smallint, p_dwt integer, p_type smallint, p_gt_type smallint, p_parse_id integer, p_destination character varying) OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
