@@ -3,5 +3,7 @@ psycopg2==2.9.9
 tqdm==4.66.5
 pylance==0.18.2
 jupyter==1.1.1
-matplotlib==3.9.2
+matplotlib==3.8.4
+basemap==1.4.1
 pandas==2.2.3
+python-dotenv==1.0.1
