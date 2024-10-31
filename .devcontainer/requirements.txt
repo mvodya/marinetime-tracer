@@ -5,5 +5,6 @@ pylance==0.18.2
 jupyter==1.1.1
 matplotlib==3.8.4
 basemap==1.4.1
+basemap-data-hires==1.3.2
 pandas==2.2.3
 python-dotenv==1.0.1
