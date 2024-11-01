@@ -11,7 +11,7 @@ def mtRunner(positions):
     output = []
 
     print("Open webdriver")
-    driver = Driver(uc=True, uc_cdp_events=True, headless=True)
+    driver = Driver(uc=True, uc_cdp_events=True, headless=False)
     raw = []
 
     # Move to position
@@ -62,6 +62,8 @@ def mtRunner(positions):
                 raise Exception("Error while loading window")
             driver.switch_to.window(driver.window_handles[0])
             driver.refresh()
+
+    print("Run movement process...")
 
     # Iterate over positions
     for pos in tqdm(positions):
