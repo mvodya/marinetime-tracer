@@ -11,7 +11,7 @@ def mtRunner(positions):
     output = []
 
     print("Open webdriver")
-    driver = Driver(uc=True, uc_cdp_events=True, headless=False)
+    driver = Driver(uc=True, uc_cdp_events=True, headless=True)
     raw = []
 
     # Move to position
