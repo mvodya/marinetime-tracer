@@ -1,0 +1,19 @@
+{
+  "name": "mt-db",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "migrate": "node-pg-migrate -d ./migrations --database-url $DATABASE_URL",
+    "revert": "node-pg-migrate -d ./migrations --database-url $DATABASE_URL down",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Mark Vodyanitskiy <mvodya@icloud.com> (https://mvodya.com)",
+  "license": "MIT",
+  "description": "Marinetime database",
+  "dependencies": {
+    "dotenv": "^17.1.0",
+    "node-pg-migrate": "^8.0.3",
+    "pg": "^8.16.3"
+  }
+}
