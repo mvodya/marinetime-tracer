@@ -1,3 +1,5 @@
+# THIS IS OUTDATED SCRIPT / FOR REFERENCE ONLY
+
 import os
 import psycopg2
 import json

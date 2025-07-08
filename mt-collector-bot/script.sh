@@ -14,8 +14,6 @@ if [ $? -eq 0 ]; then
     mv archive/data.json "archive/${timestamp}.json"
 
     echo "Data copied to archive/${timestamp}.json"
-
-    python upload.py
 elif [ $? -eq 124 ]; then
     echo "collector.py timed out after 25 minutes"
 else
