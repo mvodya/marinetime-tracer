@@ -1,7 +1,7 @@
 {
-	"name": "Marine Traffic Collector DEV",
-	"dockerComposeFile": "docker-compose.yml",
-	"service": "app",
+	"name": "Marinetraffic Grabber development",
+	"dockerComposeFile": "../docker-compose.yml",
+	"service": "grabber-dev",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"customizations": {
 		"vscode": {

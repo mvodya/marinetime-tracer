@@ -20,7 +20,7 @@ RUN apt-get install -y postgresql-client-17
 USER vscode
 
 # Install pip requirements
-COPY .devcontainer/requirements.txt /tmp/pip-tmp/
+COPY .devcontainer/mt-grabber-dev/requirements.txt /tmp/pip-tmp/
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt
 
 # Install chromedriver via seleniumbase

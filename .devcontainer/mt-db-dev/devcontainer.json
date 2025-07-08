@@ -1,0 +1,22 @@
+{
+  "name": "Marinetime Database development",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "db-dev",
+  "workspaceFolder": "/workspace/mt-db",
+  "runServices": [
+    "db",
+    "pgadmin",
+    "db-dev"
+  ],
+  "postCreateCommand": "sudo chown node node_modules",
+  "containerUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "yoavbls.pretty-ts-errors",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  }
+}
