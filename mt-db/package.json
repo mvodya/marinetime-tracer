@@ -1,10 +1,10 @@
 {
   "name": "mt-db",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "migrate": "node-pg-migrate -d ./migrations --database-url $DATABASE_URL",
-    "revert": "node-pg-migrate -d ./migrations --database-url $DATABASE_URL down",
+    "migrate": "node-pg-migrate -m ./migrations up",
+    "revert": "node-pg-migrate -m ./migrations down",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
