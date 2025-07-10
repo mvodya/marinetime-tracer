@@ -11,7 +11,7 @@ export const shorthands = undefined;
 export const up = (pgm) => {
   // Ships with characteristics table
   pgm.createTable("ships", {
-    id: { type: "bigint", primaryKey: true }, // Local auto-incrementing primary key
+    id: { type: "bigserial", primaryKey: true }, // Local auto-incrementing primary key
     mt_id: { type: "text", unique: true }, // Marinetraffic identifier
     name: { type: "text", notNull: false }, // Ship name
     flag: { type: "text", notNull: false }, // Flag of the country of registration (e.g. RU, CN)

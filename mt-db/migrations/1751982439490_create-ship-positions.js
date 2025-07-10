@@ -10,7 +10,7 @@ export const shorthands = undefined;
  */
 export const up = (pgm) => {
   pgm.createTable("ship_positions", {
-    id: { type: "bigint", primaryKey: true },
+    id: { type: "bigserial", primaryKey: true },
     ship_id: {
       type: "bigint",
       notNull: true,
