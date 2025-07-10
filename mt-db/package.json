@@ -5,7 +5,7 @@
   "scripts": {
     "migrate": "node-pg-migrate -m ./migrations up",
     "revert": "node-pg-migrate -m ./migrations down",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "Mark Vodyanitskiy <mvodya@icloud.com> (https://mvodya.com)",
@@ -13,7 +13,10 @@
   "description": "Marinetime database",
   "dependencies": {
     "dotenv": "^17.1.0",
-    "node-pg-migrate": "^8.0.3",
-    "pg": "^8.16.3"
+    "node-pg-migrate": "^8.0.3"
+  },
+  "devDependencies": {
+    "pg": "^8.16.3",
+    "vitest": "^3.2.4"
   }
 }
