@@ -4,6 +4,10 @@ ehthumbs.db
 Icon?
 Thumbs.db
 *.DS_Store
+old
+runs
+checkpoints
+todo
 
 # Selenium base files
 downloaded_files
