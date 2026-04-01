@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
 import h5py
-
 
 def open_dataset(path: str | Path, mode: str = "r") -> h5py.File:
     path = Path(path)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from mtlib import open_dataset, print_dataset_structure
+from mtlib.dataset.ds import open_dataset, print_dataset_structure
 
 
 def build_parser() -> argparse.ArgumentParser:
