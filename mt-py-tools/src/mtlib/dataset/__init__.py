@@ -9,6 +9,7 @@ from .raw import (
 from .ds import (
     open_dataset,
     print_dataset_structure,
+    print_dataset_counts,
 )
 
 from .zones import (
@@ -28,4 +29,5 @@ __all__ = [
     "safe_int",
     "open_dataset",
     "print_dataset_structure",
+    "print_dataset_counts",
 ]

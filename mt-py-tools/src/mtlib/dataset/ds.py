@@ -52,3 +52,18 @@ def print_dataset_structure(ds: h5py.File):
                         break
                     break
         print("\n")
+
+def print_dataset_counts(ds: h5py.File):
+    days = 0
+    count = 0
+
+    for _, year in ds["positions"].items():
+        for _, month in year.items():
+            for _, day in month.items():
+                days += 1
+                count += len(day)
+
+    print(f"Days: {days}")
+    print(f"Ships: {len(ds["ships"])}")
+    print(f"Positions count: {count}")
+    print(f"Tracks count: {len(ds["tracks"])}")

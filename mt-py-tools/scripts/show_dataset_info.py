@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from mtlib.dataset.ds import open_dataset, print_dataset_structure
+from mtlib.dataset.ds import open_dataset, print_dataset_structure, print_dataset_counts
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -78,6 +78,11 @@ def main() -> None:
 
         # Вывод структуры датасета
         print_dataset_structure(ds)
+        
+        print("\n\n\n")
+
+        # Вывод размеров датасета
+        print_dataset_counts(ds)
 
 
 if __name__ == "__main__":
