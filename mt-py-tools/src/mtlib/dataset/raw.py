@@ -14,8 +14,6 @@ from tqdm import tqdm
 
 F_VER = "1.0"
 
-F_VER = "1.0"
-
 positions_dtype = np.dtype([
     ("ship_id", "i8"),           # Внутренний идентификатор судна
     ("timestamp", "i4"),         # Время отчета

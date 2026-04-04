@@ -32,6 +32,13 @@ from .filtering import (
     write_filtered_ships,
 )
 
+from .tracks import (
+    TrackDetectionConfig,
+    decode_bytes,
+    detect_tracks,
+    haversine_m,
+)
+
 __all__ = [
     "append_zones_to_hdf5",
     "build_hdf5_from_archive",
@@ -50,9 +57,13 @@ __all__ = [
     "filter_dataset",
     "iter_day_datasets",
     "scan_max_ship_id",
-    "write_filtered_positi"
+    "write_filtered_positions"
     "write_filtered_ships",
     "open_dataset",
     "print_dataset_structure",
     "print_dataset_counts",
+    "TrackDetectionConfig",
+    "decode_bytes",
+    "detect_tracks",
+    "haversine_m",
 ]
