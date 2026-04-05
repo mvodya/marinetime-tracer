@@ -31,16 +31,32 @@ class TrackDetectionConfig:
     chunk_rows: int = 2_000_000
 
 
-def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+def haversine_m(lat1, lon1, lat2, lon2):
+    """
+    Great-circle distance in meters.
+    Accepts scalars or numpy arrays.
+    Input coordinates are in degrees.
+    """
+    lat1 = np.asarray(lat1, dtype=np.float64)
+    lon1 = np.asarray(lon1, dtype=np.float64)
+    lat2 = np.asarray(lat2, dtype=np.float64)
+    lon2 = np.asarray(lon2, dtype=np.float64)
+
     r = 6371000.0
-    p = math.pi / 180.0
-    dlat = (lat2 - lat1) * p
-    dlon = (lon2 - lon1) * p
+
+    lat1_rad = np.deg2rad(lat1)
+    lon1_rad = np.deg2rad(lon1)
+    lat2_rad = np.deg2rad(lat2)
+    lon2_rad = np.deg2rad(lon2)
+
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
     a = (
-        math.sin(dlat * 0.5) ** 2
-        + math.cos(lat1 * p) * math.cos(lat2 * p) * math.sin(dlon * 0.5) ** 2
+        np.sin(dlat * 0.5) ** 2
+        + np.cos(lat1_rad) * np.cos(lat2_rad) * np.sin(dlon * 0.5) ** 2
     )
-    c = 2.0 * math.asin(min(1.0, math.sqrt(a)))
+    c = 2.0 * np.arcsin(np.minimum(1.0, np.sqrt(a)))
     return r * c
 
 

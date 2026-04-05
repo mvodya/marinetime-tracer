@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterator
+from datetime import datetime, timezone, timedelta
 
 import h5py
 import numpy as np
@@ -139,3 +140,28 @@ def append_rows(dst_ds: h5py.Dataset, rows: np.ndarray) -> None:
     dst_ds.resize((new,))
     dst_ds[old:new] = rows
     
+
+def utc_date_from_ts(ts: int) -> datetime:
+    return datetime.fromtimestamp(int(ts), tz=timezone.utc).replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+
+
+def iter_position_day_paths(ds: h5py.File, start_ts: int, end_ts: int):
+    d0 = utc_date_from_ts(start_ts)
+    d1 = utc_date_from_ts(end_ts)
+
+    cur = d0
+    while cur <= d1:
+        y = f"{cur.year:04d}"
+        m = f"{cur.month:02d}"
+        d = f"{cur.day:02d}"
+        path = f"/positions/{y}/{m}/{d}"
+
+        if path in ds:
+            yield path
+
+        cur += timedelta(days=1)
