@@ -63,7 +63,10 @@ def print_dataset_counts(ds: h5py.File):
     days = 0
     count = 0
 
-    for _, year in ds["positions"].items():
+    for y, year in ds["positions"].items():
+        # Пропускаем датасет с годами
+        if y == "tracks":
+            continue
         for _, month in year.items():
             for _, day in month.items():
                 days += 1
