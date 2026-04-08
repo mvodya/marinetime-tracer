@@ -1,0 +1,90 @@
+[mtlib.dataset.ds]
+f append_rows(dst_ds: 'h5py.Dataset', rows: 'np.ndarray') -> 'None'
+f collect_day_datasets(ds: 'h5py.File') -> 'tuple[list[tuple[tuple[str, str, str], h5py.Dataset]], int]'
+f ensure_group(h5: 'h5py.File | h5py.Group', path: 'str') -> 'h5py.Group'
+f iter_day_datasets(ds: 'h5py.File') -> 'Iterator[tuple[tuple[str, str, str], h5py.Dataset]]'
+f iter_position_day_paths(ds: 'h5py.File', start_ts: 'int', end_ts: 'int')
+f open_dataset(path: 'str | Path', mode: 'str' = 'r') -> 'h5py.File'
+f print_dataset_counts(ds: 'h5py.File')
+f print_dataset_structure(ds: 'h5py.File')
+f utc_date_from_ts(ts: 'int') -> 'datetime'
+
+[mtlib.dataset.filtering]
+f build_keep_mask(total_points: 'np.ndarray', moving_points: 'np.ndarray', max_speed: 'np.ndarray', *, min_total_points: 'int', min_moving_points: 'int', min_max_speed: 'int') -> 'np.ndarray'
+f compute_ship_stats(days: 'list[tuple[tuple[str, str, str], h5py.Dataset]]', *, max_ship_id: 'int', chunk_rows_positions: 'int', speed_moving_min: 'int', speed_sanity_max: 'int', show_progress: 'bool' = True) -> 'tuple[np.ndarray, np.ndarray, np.ndarray]'
+f create_filtered_dataset(src: 'h5py.File', out_path: 'str | Path', *, filter_rules_text: 'str', overwrite: 'bool' = False) -> 'h5py.File'
+f filter_dataset(dataset_path: 'str | Path', out_path: 'str | Path', *, config: 'DatasetFilterConfig | None' = None, overwrite: 'bool' = False, show_progress: 'bool' = True) -> 'Path'
+f scan_max_ship_id(ships_ds: 'h5py.Dataset', *, chunk_rows_ships: 'int', show_progress: 'bool' = True) -> 'int'
+f write_filtered_positions(days: 'list[tuple[tuple[str, str, str], h5py.Dataset]]', dst: 'h5py.File', keep_mask: 'np.ndarray', *, chunk_rows_positions: 'int', show_progress: 'bool' = True) -> 'None'
+f write_filtered_ships(src_ships: 'h5py.Dataset', dst_ships: 'h5py.Dataset', keep_mask: 'np.ndarray', *, chunk_rows_ships: 'int', show_progress: 'bool' = True) -> 'None'
+c DatasetFilterConfig
+
+[mtlib.dataset.poi]
+f aggregate_destinations_by_poi(track_to_pois: 'dict', last_dest_map: 'dict', min_len: 'int' = 3)
+f build_cell_to_poi(clusters, shape: 'tuple[int, int]') -> 'np.ndarray'
+f build_pois_from_clusters_no_sort(clusters, heat_start: 'np.ndarray', heat_end: 'np.ndarray', heat_total: 'np.ndarray', x_edges: 'np.ndarray', y_edges: 'np.ndarray')
+f build_start_end_heatmaps_tracks(ds_tracks, extent: 'tuple[float, float, float, float]', bins: 'tuple[int, int]' = (1200, 900), chunk_rows: 'int' = 2000000, min_points: 'int | None' = None)
+f build_track_quality_dict(track_ids_sorted: 'np.ndarray', points_seen: 'np.ndarray', max_gap_sec: 'np.ndarray', max_gap_dist_m: 'np.ndarray')
+f cell_centers_from_edges(x_edges: 'np.ndarray', y_edges: 'np.ndarray')
+f collect_last_destination_per_track(ds, track_ids: 'np.ndarray', start_ts: 'int', end_ts: 'int', chunk_rows: 'int' = 2000000)
+f collect_ts_lat_lon_tid_for_track_ids(ds, track_ids: 'np.ndarray', start_ts: 'int', end_ts: 'int', chunk_rows: 'int' = 2000000)
+f compute_gap_metrics(track_ids_sorted: 'np.ndarray', tid_raw: 'np.ndarray', ts_raw: 'np.ndarray', lat_raw: 'np.ndarray', lon_raw: 'np.ndarray')
+f connected_components_8(mask: 'np.ndarray', min_cells: 'int' = 3)
+f decode_destination(arr) -> 'np.ndarray'
+f extract_poi_data(dataset_path: 'str | Path', *, config: 'POIExtractionConfig | None' = None)
+f extract_poi_to_json(dataset_path: 'str | Path', output_path: 'str | Path | None' = None, *, config: 'POIExtractionConfig | None' = None) -> 'Path'
+f fill_top_destinations(pois: 'list[dict]', poi_dest_counters, top_n: 'int' = 10)
+f is_bad_destination(norm_s: 'str') -> 'bool'
+f make_dense_mask(heat_total: 'np.ndarray', mode: 'str' = 'percentile', value: 'float' = 99.5)
+f normalize_dest(s: 'str') -> 'str'
+f pass2_assign_pois_and_collect(ds_tracks, extent, cell_to_poi, chunk_rows: 'int' = 2000000, min_points: 'int | None' = None, require_both: 'bool' = True)
+f point_to_cell(lat, lon, min_lon, min_lat, inv_dx, inv_dy, nx, ny)
+f save_poi_json(export: 'dict', output_path: 'str | Path') -> 'Path'
+c POIExtractionConfig
+
+[mtlib.dataset.raw]
+f build_hdf5_from_archive(source_path: 'str | Path', output_path: 'str | Path', *, start_date: 'str', end_date: 'str', flush_every: 'int' = 50, overwrite: 'bool' = False, show_progress: 'bool' = True) -> 'Path'
+f create_empty_hdf5(output_path: 'str | Path', *, source_path: 'str | Path | None' = None, author: 'str' = 'Mark Vodyanitskiy (mvodya@icloud.com)', version: 'str' = '1.0', overwrite: 'bool' = False) -> 'Path'
+f get_folder_stats(path: 'str | Path') -> 'tuple[float, int]'
+f get_json_files_by_date_range(root_dir: 'str | Path', start_date: 'str', end_date: 'str', date_format: 'str' = '%d.%m.%Y') -> 'list[Path]'
+f safe_int(value, default: 'int' = -1) -> 'int'
+
+[mtlib.dataset.tracks]
+f append_track_row(dst_tracks: 'h5py.Dataset', row: 'np.void') -> 'None'
+f close_track_if_any(dst_tracks: 'h5py.Dataset', st: 'dict') -> 'None'
+f create_tracks_dataset_copy(src: 'h5py.File', dst_path: 'str | Path', config: 'TrackDetectionConfig', overwrite: 'bool' = False) -> 'h5py.File'
+f decode_bytes(value)
+f detect_tracks(src_path: 'str | Path', dst_path: 'str | Path', *, config: 'TrackDetectionConfig | None' = None, overwrite: 'bool' = False, show_progress: 'bool' = True) -> 'Path'
+f haversine_m(lat1, lon1, lat2, lon2)
+f idle_should_start(st: 'dict', ts: 'int', lat: 'float', lon: 'float', speed: 'int', dest, config: 'TrackDetectionConfig') -> 'bool'
+f need_new_track(st: 'dict', ts: 'int', lat: 'float', lon: 'float', speed: 'int', course: 'int', dest, config: 'TrackDetectionConfig') -> 'tuple[bool, int, float, bool]'
+f process_day_for_tracks(src_day: 'h5py.Dataset', dst_day: 'h5py.Dataset', dst_tracks: 'h5py.Dataset', ship_state: 'dict[int, dict]', next_track_id: 'int', config: 'TrackDetectionConfig', pbar=None) -> 'int'
+f set_idle(st: 'dict', ts: 'int', lat: 'float', lon: 'float', dest) -> 'None'
+f start_new_track(st: 'dict', ship_id: 'int', ts: 'int', lat: 'float', lon: 'float', speed: 'int', course: 'int', dest, next_track_id: 'int', config: 'TrackDetectionConfig') -> 'int'
+f update_stop_logic(st: 'dict', dt: 'int', speed: 'int', lat: 'float', lon: 'float', config: 'TrackDetectionConfig') -> 'None'
+c TrackDetectionConfig
+
+[mtlib.dataset.tsorted]
+f append_rows(dset: 'h5py.Dataset', rows: 'np.ndarray') -> 'None'
+f compute_group_bounds(track_id: 'int', tracks_per_group: 'int') -> 'tuple[int, int]'
+f compute_subrange_bounds(track_id: 'int', g0: 'int', subrange: 'int', tracks_per_group: 'int') -> 'tuple[int, int, int]'
+f create_tsorted_output(src: 'h5py.File', out_path: 'str | Path', *, ts_dtype: 'np.dtype', copy_original_positions: 'bool', overwrite: 'bool' = False) -> 'h5py.File'
+f ensure_parent_dir(path: 'str | Path') -> 'None'
+f filter_chunk_by_poi(chunk: 'np.ndarray', poi_track_ids: 'set[int] | None') -> 'np.ndarray'
+f find_any_positions_dataset(ds: 'h5py.File') -> 'h5py.Dataset'
+f flush_all_buffers(out_tracks_root: 'h5py.Group', ds_cache: 'dict[str, h5py.Dataset]', buffers: 'dict[tuple[int, int, int, int], list[np.ndarray]]', buffer_sizes: 'dict[tuple[int, int, int, int], int]', *, ts_dtype: 'np.dtype', show_progress: 'bool' = True) -> 'int'
+f flush_one_buffer(out_tracks_root: 'h5py.Group', ds_cache: 'dict[str, h5py.Dataset]', buffers: 'dict[tuple[int, int, int, int], list[np.ndarray]]', buffer_sizes: 'dict[tuple[int, int, int, int], int]', *, key: 'tuple[int, int, int, int]', ts_dtype: 'np.dtype') -> 'int'
+f get_or_create_tsorted_dataset(out_tracks_root: 'h5py.Group', ds_cache: 'dict[str, h5py.Dataset]', *, g0: 'int', g1: 'int', s0: 'int', s1: 'int', ts_dtype: 'np.dtype') -> 'h5py.Dataset'
+f load_poi_track_ids(poi_json_path: 'str | Path', *, show_progress: 'bool' = True) -> 'set[int]'
+f make_tsorted_dtype(src_dtype: 'np.dtype', tsort_fields: 'tuple[str, ...]') -> 'np.dtype'
+f range_label(a: 'int', b: 'int') -> 'str'
+f repack_tracksorted_dataset(dataset_path: 'str | Path', out_path: 'str | Path', *, poi_json_path: 'str | Path | None' = None, config: 'TrackSortedConfig | None' = None, overwrite: 'bool' = False, show_progress: 'bool' = True) -> 'Path'
+f split_chunk_into_subranges(chunk: 'np.ndarray', *, tracks_per_group: 'int', datasets_per_group: 'int')
+f stable_sort_by_track_then_time(arr: 'np.ndarray') -> 'np.ndarray'
+f subset_fields(chunk: 'np.ndarray', ts_dtype: 'np.dtype', tsort_fields: 'tuple[str, ...]') -> 'np.ndarray'
+c TrackSortedConfig
+
+[mtlib.dataset.zones]
+f append_zones_to_hdf5(dataset_path: 'str | Path', zones: 'list[dict]') -> 'None'
+f import_zones_from_json(json_path: 'str | Path', dataset_path: 'str | Path') -> 'None'
+f load_zones_json(path: 'str | Path') -> 'list[dict]'
