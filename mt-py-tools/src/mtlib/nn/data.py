@@ -102,6 +102,7 @@ def rasterize_polyline_to_grid(
     *,
     mark_points: bool = True,
     max_step_cells: int | None = None,
+    line_radius: int | None = None,
 ) -> np.ndarray:
     min_lon, max_lon, min_lat, max_lat = map(float, extent)
     h = w = cfg.grid_size
@@ -110,11 +111,29 @@ def rasterize_polyline_to_grid(
     if len(lat) == 0:
         return out
 
+    if line_radius is None:
+        line_radius = cfg.line_radius
+
     x = ((lon - min_lon) / max(1e-12, (max_lon - min_lon)) * w).astype(np.float64)
     y = ((lat - min_lat) / max(1e-12, (max_lat - min_lat)) * h).astype(np.float64)
 
     x = np.clip(np.floor(x), 0, w - 1).astype(np.int32)
     y = np.clip(np.floor(y), 0, h - 1).astype(np.int32)
+
+    def stamp(xx: int, yy: int) -> None:
+        if line_radius <= 0:
+            out[yy, xx] = 1.0
+            return
+
+        x0 = max(0, xx - line_radius)
+        x1 = min(w, xx + line_radius + 1)
+        y0 = max(0, yy - line_radius)
+        y1 = min(h, yy + line_radius + 1)
+
+        for sy in range(y0, y1):
+            for sx in range(x0, x1):
+                if max(abs(sx - xx), abs(sy - yy)) <= line_radius:
+                    out[sy, sx] = 1.0
 
     def draw_line(x0: int, y0: int, x1: int, y1: int) -> None:
         dx = abs(x1 - x0)
@@ -125,7 +144,7 @@ def rasterize_polyline_to_grid(
 
         xx, yy = x0, y0
         while True:
-            out[yy, xx] = 1.0
+            stamp(xx, yy)
             if xx == x1 and yy == y1:
                 break
             e2 = 2 * err
@@ -137,7 +156,8 @@ def rasterize_polyline_to_grid(
                 yy += sy
 
     if mark_points:
-        out[y, x] = 1.0
+        for xx, yy in zip(x, y, strict=False):
+            stamp(int(xx), int(yy))
 
     if len(x) == 1:
         return out
@@ -145,9 +165,11 @@ def rasterize_polyline_to_grid(
     for i in range(len(x) - 1):
         x0, y0 = int(x[i]), int(y[i])
         x1, y1 = int(x[i + 1]), int(y[i + 1])
+
         if max_step_cells is not None:
             if max(abs(x1 - x0), abs(y1 - y0)) > max_step_cells:
                 continue
+
         draw_line(x0, y0, x1, y1)
 
     return out
@@ -168,6 +190,9 @@ def build_known_and_target_masks(
     for s, e in gaps:
         known_mask[s:e] = False
 
+    known_radius = cfg.line_radius if cfg.line_radius_known is None else cfg.line_radius_known
+    target_radius = cfg.line_radius if cfg.line_radius_target is None else cfg.line_radius_target
+
     known = rasterize_polyline_to_grid(
         lat[known_mask],
         lon[known_mask],
@@ -175,6 +200,7 @@ def build_known_and_target_masks(
         cfg,
         mark_points=True,
         max_step_cells=cfg.grid_size // 2,
+        line_radius=known_radius,
     )
     target = rasterize_polyline_to_grid(
         lat,
@@ -183,6 +209,7 @@ def build_known_and_target_masks(
         cfg,
         mark_points=True,
         max_step_cells=cfg.grid_size // 2,
+        line_radius=target_radius,
     )
     return known, target, gaps
 

@@ -11,12 +11,18 @@ class GridConfig:
     grid_size: int = 128
     cell_m: float = 100.0
     density_cell_m: float = 1000.0
+
     n_anchor: int = 5
     gaps_min_points: int = 5
     gaps_max_points: int = 100
     gaps_count_min: int = 1
     gaps_count_max: int = 3
+    
     pred_thr: float = 0.5
+
+    line_radius: int = 1
+    line_radius_known: int | None = None
+    line_radius_target: int | None = None
 
 
 @dataclass(slots=True)

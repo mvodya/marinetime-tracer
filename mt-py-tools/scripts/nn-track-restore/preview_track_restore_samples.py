@@ -19,6 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--grid-size", type=int, default=128)
     p.add_argument("--cell-m", type=float, default=100.0)
     p.add_argument("--density-cell-m", type=float, default=1000.0)
+    p.add_argument("--line_radius", type=int, default=1)
     return p
 
 
@@ -29,6 +30,7 @@ def main() -> None:
         grid_size=args.grid_size,
         cell_m=args.cell_m,
         density_cell_m=args.density_cell_m,
+        line_radius=args.line_radius,
     )
 
     frags_name = "frags_train.parquet" if args.split == "train" else "frags_val.parquet"
