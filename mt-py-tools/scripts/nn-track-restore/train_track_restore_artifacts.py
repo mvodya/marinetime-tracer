@@ -14,8 +14,11 @@ from mtlib.nn import (
     TrackInpaintDataset,
     estimate_pos_weight,
     fit,
+    get_amp_enabled,
     get_device,
+    load_checkpoint,
     make_loader,
+    make_summary_writer,
 )
 
 
@@ -48,6 +51,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--pred-thr", type=float, default=0.5)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--device", type=str, default=None)
+
+    p.add_argument("--log-every", type=int, default=20)
+    p.add_argument("--tb", action="store_true", help="Enable TensorBoard logging")
+    p.add_argument("--fixed-batch-size", type=int, default=4)
+    p.add_argument("--resume", type=Path, default=None, help="Optional checkpoint to resume from")
     return p
 
 
@@ -91,13 +99,16 @@ def main() -> None:
         return_meta=True,
     )
 
+    device = get_device(args.device)
+    pin_memory = (device.type == "cuda")
+
     train_loader = make_loader(
         train_ds,
         batch_size=args.batch_size,
         shuffle=True,
         num_workers=args.num_workers,
         drop_last=False,
-        pin_memory=False,
+        pin_memory=pin_memory,
     )
     val_loader = make_loader(
         val_ds,
@@ -105,8 +116,18 @@ def main() -> None:
         shuffle=False,
         num_workers=args.num_workers,
         drop_last=False,
-        pin_memory=False,
+        pin_memory=pin_memory,
     )
+
+    fixed_loader = make_loader(
+        val_ds,
+        batch_size=args.fixed_batch_size,
+        shuffle=False,
+        num_workers=0,
+        drop_last=False,
+        pin_memory=pin_memory,
+    )
+    fixed_batch = next(iter(fixed_loader))
 
     model = ResUNetAttention(
         in_ch=4,
@@ -123,7 +144,6 @@ def main() -> None:
         pos_weight=pos_weight,
     )
 
-    device = get_device(args.device)
     criterion = criterion.to(device)
     model = model.to(device)
 
@@ -134,6 +154,18 @@ def main() -> None:
     )
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.resume is not None:
+        ckpt = load_checkpoint(args.resume, model=model, optimizer=optimizer, map_location=device)
+        print(f"Resumed from: {args.resume}")
+        print(f"Checkpoint epoch: {ckpt.get('epoch')}")
+
+    writer = None
+    if args.tb:
+        writer = make_summary_writer(args.out_dir / "tb")
+        if writer is None:
+            print("TensorBoard writer is unavailable. Install tensorboard package.")
+
     run_cfg = {
         "dataset_path": str(args.dataset_path),
         "artifact_dir": str(args.artifact_dir),
@@ -162,6 +194,7 @@ def main() -> None:
             "pred_thr": args.pred_thr,
         },
         "device": str(device),
+        "amp_enabled": get_amp_enabled(device, True),
         "seed": args.seed,
     }
     (args.out_dir / "run_config.json").write_text(
@@ -178,14 +211,22 @@ def main() -> None:
         out_dir=args.out_dir,
         epochs=args.epochs,
         device=device,
-        amp_enabled=True,
+        amp_enabled=get_amp_enabled(device, True),
         pred_thr=args.pred_thr,
         save_every=1,
         best_metric_name="iou",
+        writer=writer,
+        log_every=args.log_every,
+        fixed_batch=fixed_batch,
+        fixed_preview_items=args.fixed_batch_size,
     )
+
+    if writer is not None:
+        writer.close()
 
     print(f"Training complete. Epochs: {len(history)}")
     print(f"Artifacts saved to: {args.out_dir}")
+    print(f"TensorBoard logdir: {args.out_dir / 'tb'}")
 
 
 if __name__ == "__main__":

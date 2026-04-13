@@ -51,7 +51,16 @@ from .checkpoints import load_checkpoint, save_checkpoint, save_history_csv
 from .losses import CombinedBCEDiceLoss, SoftDiceLoss, estimate_pos_weight
 from .metrics import compute_metrics
 from .models import ResUNetAttention
-from .train import fit, get_device, train_one_epoch, validate
+from .train import (
+    evaluate_fixed_batch,
+    fit,
+    get_amp_enabled,
+    get_device,
+    make_summary_writer,
+    train_one_epoch,
+    validate,
+)
+from .visualize import make_preview_figure, save_preview_png
 
 
 __all__ = [
@@ -97,8 +106,13 @@ __all__ = [
     "estimate_pos_weight",
     "compute_metrics",
     "ResUNetAttention",
+    "evaluate_fixed_batch",
     "fit",
+    "get_amp_enabled",
     "get_device",
+    "make_summary_writer",
     "train_one_epoch",
     "validate",
+    "make_preview_figure",
+    "save_preview_png",
 ]
