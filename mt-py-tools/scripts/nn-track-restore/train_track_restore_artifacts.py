@@ -119,15 +119,25 @@ def main() -> None:
         pin_memory=pin_memory,
     )
 
+    preview_ds = val_ds if len(val_ds) >= 2 else train_ds
+    preview_bs = min(args.fixed_batch_size, len(preview_ds))
+    if preview_bs <= 0:
+        raise RuntimeError("Preview dataset is empty")
+
     fixed_loader = make_loader(
-        val_ds,
-        batch_size=args.fixed_batch_size,
+        preview_ds,
+        batch_size=preview_bs,
         shuffle=False,
         num_workers=0,
         drop_last=False,
         pin_memory=pin_memory,
     )
     fixed_batch = next(iter(fixed_loader))
+
+    print(f"preview dataset size: {len(preview_ds)}")
+    print(f"fixed batch x shape: {tuple(fixed_batch['x'].shape)}")
+    if "meta" in fixed_batch:
+        print(f"fixed batch meta count: {len(fixed_batch['meta'])}")
 
     model = ResUNetAttention(
         in_ch=4,

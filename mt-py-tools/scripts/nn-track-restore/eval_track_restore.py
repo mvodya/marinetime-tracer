@@ -94,15 +94,24 @@ def main() -> None:
     for k, v in metrics.items():
         print(f"  {k:16s}: {v:.6f}")
 
+    preview_bs = min(args.preview_count, len(ds))
+    if preview_bs <= 0:
+        raise RuntimeError("Preview dataset is empty")
+
     preview_loader = make_loader(
         ds,
-        batch_size=args.preview_count,
+        batch_size=preview_bs,
         shuffle=False,
         num_workers=0,
         drop_last=False,
         pin_memory=(device.type == "cuda"),
     )
     batch = next(iter(preview_loader))
+
+    print(f"preview dataset size: {len(ds)}")
+    print(f"preview batch x shape: {tuple(batch['x'].shape)}")
+    if "meta" in batch:
+        print(f"preview batch meta count: {len(batch['meta'])}")
     x = batch["x"].to(device)
     y = batch["y"].to(device)
     with torch.no_grad():
