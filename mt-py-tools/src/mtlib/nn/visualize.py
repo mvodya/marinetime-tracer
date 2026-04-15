@@ -8,6 +8,16 @@ import numpy as np
 import torch
 
 
+def _prepare_density_for_display(
+    density: np.ndarray, q: float = 0.98
+) -> tuple[np.ndarray, float]:
+    vis = np.log1p(density.astype(np.float32, copy=False))
+    nz = vis[vis > 0]
+    vmax = float(np.quantile(nz, q)) if nz.size else 1.0
+    vmax = max(vmax, 1e-6)
+    return np.clip(vis, 0.0, vmax), vmax
+
+
 @torch.no_grad()
 def make_preview_figure(
     x: torch.Tensor,
@@ -42,7 +52,8 @@ def make_preview_figure(
         ax1.axis("off")
 
         ax2 = fig.add_subplot(n, 4, i * 4 + 2)
-        ax2.imshow(density, origin="lower")
+        density_vis, density_vmax = _prepare_density_for_display(density)
+        ax2.imshow(density_vis, origin="lower", vmin=0.0, vmax=density_vmax)
         ax2.set_title("density")
         ax2.axis("off")
 
@@ -74,7 +85,10 @@ def save_preview_png(
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fig = make_preview_figure(
-        x, y, logits, metas,
+        x,
+        y,
+        logits,
+        metas,
         max_items=max_items,
         pred_thr=pred_thr,
     )

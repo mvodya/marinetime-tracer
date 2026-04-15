@@ -10,8 +10,20 @@ import numpy as np
 from mtlib.nn import GridConfig, TrackInpaintDataset
 
 
+def prepare_density_for_display(
+    density: np.ndarray, q: float = 0.98
+) -> tuple[np.ndarray, float]:
+    vis = np.log1p(density.astype(np.float32, copy=False))
+    nz = vis[vis > 0]
+    vmax = float(np.quantile(nz, q)) if nz.size else 1.0
+    vmax = max(vmax, 1e-6)
+    return np.clip(vis, 0.0, vmax), vmax
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Preview generated train samples for track restoration")
+    p = argparse.ArgumentParser(
+        description="Preview generated train samples for track restoration"
+    )
     p.add_argument("dataset_path", type=Path)
     p.add_argument("artifact_dir", type=Path)
     p.add_argument("--split", choices=["train", "val"], default="train")
@@ -59,7 +71,8 @@ def main() -> None:
     ax1.set_title("known")
 
     ax2 = fig.add_subplot(2, 2, 2)
-    ax2.imshow(x[3], origin="lower")
+    density_vis, density_vmax = prepare_density_for_display(x[3])
+    ax2.imshow(density_vis, origin="lower", vmin=0.0, vmax=density_vmax)
     ax2.set_title("density")
 
     ax3 = fig.add_subplot(2, 2, 3)

@@ -190,8 +190,12 @@ def build_known_and_target_masks(
     for s, e in gaps:
         known_mask[s:e] = False
 
-    known_radius = cfg.line_radius if cfg.line_radius_known is None else cfg.line_radius_known
-    target_radius = cfg.line_radius if cfg.line_radius_target is None else cfg.line_radius_target
+    known_radius = (
+        cfg.line_radius if cfg.line_radius_known is None else cfg.line_radius_known
+    )
+    target_radius = (
+        cfg.line_radius if cfg.line_radius_target is None else cfg.line_radius_target
+    )
 
     known = rasterize_polyline_to_grid(
         lat[known_mask],
@@ -214,6 +218,14 @@ def build_known_and_target_masks(
     return known, target, gaps
 
 
+def normalize_density_map(density: np.ndarray) -> np.ndarray:
+    density = np.log1p(density.astype(np.float32, copy=False))
+    density_max = float(density.max())
+    if density_max > 0.0:
+        density /= density_max
+    return density.astype(np.float32, copy=False)
+
+
 class TrackInpaintDataset(Dataset):
     def __init__(
         self,
@@ -230,7 +242,9 @@ class TrackInpaintDataset(Dataset):
         self.dataset_path = Path(dataset_path)
         self.frags = load_fragment_arrays(frags_path)
         self.track_index = load_track_index(track_index_path)
-        self.density_map, self.density_geo, self.global_extent = load_density_npz(density_path)
+        self.density_map, self.density_geo, self.global_extent = load_density_npz(
+            density_path
+        )
 
         self.grid_cfg = grid_cfg
         self.seed = int(seed)
@@ -272,7 +286,9 @@ class TrackInpaintDataset(Dataset):
             row["s"],
             row["e"],
         )
-        if len(fragment) < (self.grid_cfg.n_anchor * 2 + self.grid_cfg.gaps_min_points + 1):
+        if len(fragment) < (
+            self.grid_cfg.n_anchor * 2 + self.grid_cfg.gaps_min_points + 1
+        ):
             raise ValueError(
                 f"Fragment too short for gaps: track={row['track_id']} len={len(fragment)}"
             )
@@ -287,7 +303,8 @@ class TrackInpaintDataset(Dataset):
             extent,
             (self.grid_cfg.grid_size, self.grid_cfg.grid_size),
             mode=self.density_mode,
-        ).astype(np.float32)
+        )
+        density = normalize_density_map(density)
 
         x = np.stack(
             [
