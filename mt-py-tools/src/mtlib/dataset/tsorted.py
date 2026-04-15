@@ -64,7 +64,9 @@ def compute_group_bounds(track_id: int, tracks_per_group: int) -> tuple[int, int
     return g0, g1
 
 
-def compute_subrange_bounds(track_id: int, g0: int, subrange: int, tracks_per_group: int) -> tuple[int, int, int]:
+def compute_subrange_bounds(
+    track_id: int, g0: int, subrange: int, tracks_per_group: int
+) -> tuple[int, int, int]:
     s_idx = (track_id - g0) // subrange
     s0 = g0 + s_idx * subrange
     s1 = min(s0 + subrange - 1, g0 + tracks_per_group - 1)
@@ -208,7 +210,13 @@ def append_rows(dset: h5py.Dataset, rows: np.ndarray) -> None:
     n0 = dset.shape[0]
     n_add = rows.shape[0]
     dset.resize((n0 + n_add,))
-    dset[n0:n0 + n_add] = rows
+    dset[n0 : n0 + n_add] = rows
+
+
+def overwrite_rows(dset: h5py.Dataset, rows: np.ndarray) -> None:
+    dset.resize((rows.shape[0],))
+    if rows.shape[0] > 0:
+        dset[:] = rows
 
 
 def flush_one_buffer(
@@ -225,6 +233,7 @@ def flush_one_buffer(
         return 0
 
     merged = np.concatenate(parts, axis=0)
+    written = int(merged.shape[0])
     merged = stable_sort_by_track_then_time(merged)
 
     g0, g1, s0, s1 = key
@@ -237,9 +246,14 @@ def flush_one_buffer(
         s1=s1,
         ts_dtype=ts_dtype,
     )
-    append_rows(dset, merged)
 
-    written = int(merged.shape[0])
+    if dset.shape[0] > 0:
+        merged = stable_sort_by_track_then_time(
+            np.concatenate((dset[:], merged), axis=0)
+        )
+
+    overwrite_rows(dset, merged)
+
     buffers[key].clear()
     buffer_sizes[key] = 0
     return written
@@ -274,14 +288,18 @@ def flush_all_buffers(
     return total_written
 
 
-def subset_fields(chunk: np.ndarray, ts_dtype: np.dtype, tsort_fields: tuple[str, ...]) -> np.ndarray:
+def subset_fields(
+    chunk: np.ndarray, ts_dtype: np.dtype, tsort_fields: tuple[str, ...]
+) -> np.ndarray:
     out = np.empty((chunk.shape[0],), dtype=ts_dtype)
     for name in tsort_fields:
         out[name] = chunk[name]
     return out
 
 
-def filter_chunk_by_poi(chunk: np.ndarray, poi_track_ids: set[int] | None) -> np.ndarray:
+def filter_chunk_by_poi(
+    chunk: np.ndarray, poi_track_ids: set[int] | None
+) -> np.ndarray:
     if poi_track_ids is None:
         return chunk
 
@@ -401,7 +419,9 @@ def repack_tracksorted_dataset(
 
             p_days = None
             if show_progress:
-                p_days = tqdm(total=total_days, desc="Repack days", unit="day", **TQDM_KW)
+                p_days = tqdm(
+                    total=total_days, desc="Repack days", unit="day", **TQDM_KW
+                )
 
             rows_read_total = 0
             rows_after_filter_total = 0
@@ -490,9 +510,13 @@ def repack_tracksorted_dataset(
             out.attrs["tsorted_datasets_per_group"] = int(config.datasets_per_group)
             out.attrs["tsorted_read_chunk_rows"] = int(config.read_chunk_rows)
             out.attrs["tsorted_flush_threshold_rows"] = int(config.flush_threshold_rows)
-            out.attrs["tsorted_copy_original_positions"] = int(config.copy_original_positions)
+            out.attrs["tsorted_copy_original_positions"] = int(
+                config.copy_original_positions
+            )
             out.attrs["tsorted_use_poi_filter"] = int(config.use_poi_filter)
-            out.attrs["tsorted_fields"] = json.dumps(list(config.tsort_fields), ensure_ascii=False)
+            out.attrs["tsorted_fields"] = json.dumps(
+                list(config.tsort_fields), ensure_ascii=False
+            )
 
             if poi_track_ids is not None:
                 out.attrs["tsorted_poi_tracks_count"] = int(len(poi_track_ids))

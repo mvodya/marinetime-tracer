@@ -85,9 +85,20 @@ def set_idle(st: dict, ts: int, lat: float, lon: float, dest) -> None:
     st["stop_accum_sec"] = 0
 
 
-def idle_should_start(st: dict, ts: int, lat: float, lon: float, speed: int, dest, config: TrackDetectionConfig) -> bool:
+def idle_should_start(
+    st: dict,
+    ts: int,
+    lat: float,
+    lon: float,
+    speed: int,
+    dest,
+    config: TrackDetectionConfig,
+) -> bool:
     sp = int(speed)
-    moved_far = haversine_m(st["idle_lat"], st["idle_lon"], float(lat), float(lon)) > config.stop_radius_m
+    moved_far = (
+        haversine_m(st["idle_lat"], st["idle_lon"], float(lat), float(lon))
+        > config.stop_radius_m
+    )
     dest_changed = dest != st.get("idle_dest", None)
     return (
         (sp >= config.speed_moving_min and moved_far)
@@ -152,7 +163,16 @@ def close_track_if_any(dst_tracks: h5py.Dataset, st: dict) -> None:
     append_track_row(dst_tracks, row)
 
 
-def need_new_track(st: dict, ts: int, lat: float, lon: float, speed: int, course: int, dest, config: TrackDetectionConfig) -> tuple[bool, int, float, bool]:
+def need_new_track(
+    st: dict,
+    ts: int,
+    lat: float,
+    lon: float,
+    speed: int,
+    course: int,
+    dest,
+    config: TrackDetectionConfig,
+) -> tuple[bool, int, float, bool]:
     last_ts = st["last_ts"]
     dt = int(ts) - int(last_ts)
     if dt < 0:
@@ -178,7 +198,9 @@ def need_new_track(st: dict, ts: int, lat: float, lon: float, speed: int, course
     return False, dt, dist, dest_changed
 
 
-def update_stop_logic(st: dict, dt: int, speed: int, lat: float, lon: float, config: TrackDetectionConfig) -> None:
+def update_stop_logic(
+    st: dict, dt: int, speed: int, lat: float, lon: float, config: TrackDetectionConfig
+) -> None:
     sp = int(speed)
 
     if sp < config.speed_moving_min:
@@ -188,7 +210,9 @@ def update_stop_logic(st: dict, dt: int, speed: int, lat: float, lon: float, con
             st["stop_anchor_lon"] = float(lon)
             st["stop_accum_sec"] = 0
 
-        d_anchor = haversine_m(st["stop_anchor_lat"], st["stop_anchor_lon"], float(lat), float(lon))
+        d_anchor = haversine_m(
+            st["stop_anchor_lat"], st["stop_anchor_lon"], float(lat), float(lon)
+        )
         if d_anchor <= config.stop_radius_m:
             st["stop_accum_sec"] += int(dt)
         else:
@@ -200,7 +224,12 @@ def update_stop_logic(st: dict, dt: int, speed: int, lat: float, lon: float, con
         st["stop_accum_sec"] = 0
 
 
-def create_tracks_dataset_copy(src: h5py.File, dst_path: str | Path, config: TrackDetectionConfig, overwrite: bool = False) -> h5py.File:
+def create_tracks_dataset_copy(
+    src: h5py.File,
+    dst_path: str | Path,
+    config: TrackDetectionConfig,
+    overwrite: bool = False,
+) -> h5py.File:
     dst_path = Path(dst_path)
 
     if dst_path.exists():
@@ -227,18 +256,43 @@ def create_tracks_dataset_copy(src: h5py.File, dst_path: str | Path, config: Tra
         f"DEST_DIST_M={config.dest_dist_m}"
     )
 
-    dst.create_dataset("ships", data=src["ships"][:], dtype=src["ships"].dtype,
-                       chunks=True, compression="gzip", compression_opts=4)
+    dst.create_dataset(
+        "ships",
+        data=src["ships"][:],
+        dtype=src["ships"].dtype,
+        chunks=True,
+        compression="gzip",
+        compression_opts=4,
+    )
 
-    dst.create_dataset("files", data=src["files"][:], dtype=src["files"].dtype,
-                       chunks=True, compression="gzip", compression_opts=4)
+    dst.create_dataset(
+        "files",
+        data=src["files"][:],
+        dtype=src["files"].dtype,
+        chunks=True,
+        compression="gzip",
+        compression_opts=4,
+    )
 
     if "zones" in src:
-        dst.create_dataset("zones", data=src["zones"][:], dtype=src["zones"].dtype,
-                           chunks=True, compression="gzip", compression_opts=4)
+        dst.create_dataset(
+            "zones",
+            data=src["zones"][:],
+            dtype=src["zones"].dtype,
+            chunks=True,
+            compression="gzip",
+            compression_opts=4,
+        )
 
-    dst.create_dataset("tracks", shape=(0,), maxshape=(None,), dtype=src["tracks"].dtype,
-                       chunks=True, compression="gzip", compression_opts=4)
+    dst.create_dataset(
+        "tracks",
+        shape=(0,),
+        maxshape=(None,),
+        dtype=src["tracks"].dtype,
+        chunks=True,
+        compression="gzip",
+        compression_opts=4,
+    )
 
     dst.create_group("positions")
     return dst
@@ -282,17 +336,43 @@ def process_day_for_tracks(
             if st is None:
                 st = {}
                 ship_state[ship_id] = st
-                next_track_id = start_new_track(st, ship_id, ts, lat, lon, speed, course, dest, next_track_id, config)
+                next_track_id = start_new_track(
+                    st,
+                    ship_id,
+                    ts,
+                    lat,
+                    lon,
+                    speed,
+                    course,
+                    dest,
+                    next_track_id,
+                    config,
+                )
                 out["track_id"][i] = st["track_id"]
                 continue
 
-            new_track, dt, dist, dest_changed = need_new_track(st, ts, lat, lon, speed, course, dest, config)
+            new_track, dt, dist, dest_changed = need_new_track(
+                st, ts, lat, lon, speed, course, dest, config
+            )
             update_stop_logic(st, dt, speed, lat, lon, config)
-            stop_long_enough = st["stop_active"] and st["stop_accum_sec"] >= config.stop_dwell_sec
+            stop_long_enough = (
+                st["stop_active"] and st["stop_accum_sec"] >= config.stop_dwell_sec
+            )
 
             if st.get("idle", False):
                 if idle_should_start(st, ts, lat, lon, speed, dest, config):
-                    next_track_id = start_new_track(st, ship_id, ts, lat, lon, speed, course, dest, next_track_id, config)
+                    next_track_id = start_new_track(
+                        st,
+                        ship_id,
+                        ts,
+                        lat,
+                        lon,
+                        speed,
+                        course,
+                        dest,
+                        next_track_id,
+                        config,
+                    )
                     out["track_id"][i] = st["track_id"]
                 else:
                     out["track_id"][i] = config.idle_track_id
@@ -307,7 +387,18 @@ def process_day_for_tracks(
 
             if new_track:
                 close_track_if_any(dst_tracks, st)
-                next_track_id = start_new_track(st, ship_id, ts, lat, lon, speed, course, dest, next_track_id, config)
+                next_track_id = start_new_track(
+                    st,
+                    ship_id,
+                    ts,
+                    lat,
+                    lon,
+                    speed,
+                    course,
+                    dest,
+                    next_track_id,
+                    config,
+                )
                 out["track_id"][i] = st["track_id"]
                 continue
 
@@ -362,7 +453,11 @@ def detect_tracks(
             day_list = list(iter_day_datasets(src))
             total_positions = sum(ds.shape[0] for _, ds in day_list)
 
-            pbar = tqdm(total=total_positions, unit="pos", desc="Build tracks") if show_progress else None
+            pbar = (
+                tqdm(total=total_positions, unit="pos", desc="Build tracks")
+                if show_progress
+                else None
+            )
 
             for (yyyy, mm, dd), src_day in day_list:
                 g = ensure_group(dst, f"positions/{yyyy}/{mm}")

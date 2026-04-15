@@ -47,7 +47,9 @@ def build_start_end_heatmaps_tracks(
     heat_end = np.zeros((ny, nx), dtype=np.uint32)
 
     n = int(ds_tracks.shape[0])
-    for s in tqdm(range(0, n, chunk_rows), desc="Pass1: tracks -> heatmaps", unit="chunk"):
+    for s in tqdm(
+        range(0, n, chunk_rows), desc="Pass1: tracks -> heatmaps", unit="chunk"
+    ):
         e = min(n, s + chunk_rows)
         block = ds_tracks[s:e]
 
@@ -60,25 +62,48 @@ def build_start_end_heatmaps_tracks(
         elat = block["end_lat"].astype(np.float64, copy=False)
         elon = block["end_lon"].astype(np.float64, copy=False)
 
-        mask &= np.isfinite(slat) & np.isfinite(slon) & np.isfinite(elat) & np.isfinite(elon)
+        mask &= (
+            np.isfinite(slat)
+            & np.isfinite(slon)
+            & np.isfinite(elat)
+            & np.isfinite(elon)
+        )
         if not np.any(mask):
             continue
 
-        mask_start = mask & (slon >= min_lon) & (slon <= max_lon) & (slat >= min_lat) & (slat <= max_lat)
+        mask_start = (
+            mask
+            & (slon >= min_lon)
+            & (slon <= max_lon)
+            & (slat >= min_lat)
+            & (slat <= max_lat)
+        )
         if np.any(mask_start):
-            hs, _, _ = np.histogram2d(slat[mask_start], slon[mask_start], bins=(y_edges, x_edges))
+            hs, _, _ = np.histogram2d(
+                slat[mask_start], slon[mask_start], bins=(y_edges, x_edges)
+            )
             heat_start += hs.astype(np.uint32, copy=False)
 
-        mask_end = mask & (elon >= min_lon) & (elon <= max_lon) & (elat >= min_lat) & (elat <= max_lat)
+        mask_end = (
+            mask
+            & (elon >= min_lon)
+            & (elon <= max_lon)
+            & (elat >= min_lat)
+            & (elat <= max_lat)
+        )
         if np.any(mask_end):
-            he, _, _ = np.histogram2d(elat[mask_end], elon[mask_end], bins=(y_edges, x_edges))
+            he, _, _ = np.histogram2d(
+                elat[mask_end], elon[mask_end], bins=(y_edges, x_edges)
+            )
             heat_end += he.astype(np.uint32, copy=False)
 
     heat_total = heat_start + heat_end
     return heat_start, heat_end, heat_total, x_edges, y_edges
 
 
-def make_dense_mask(heat_total: np.ndarray, mode: str = "percentile", value: float = 99.5):
+def make_dense_mask(
+    heat_total: np.ndarray, mode: str = "percentile", value: float = 99.5
+):
     nz = heat_total[heat_total > 0]
     if nz.size == 0:
         return np.zeros_like(heat_total, dtype=bool), 0.0
@@ -103,9 +128,14 @@ def connected_components_8(mask: np.ndarray, min_cells: int = 3):
     visited = np.zeros_like(mask, dtype=np.uint8)
 
     nbrs = [
-        (-1, -1), (-1, 0), (-1, 1),
-        (0, -1),           (0, 1),
-        (1, -1),  (1, 0),  (1, 1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
     ]
 
     clusters: list[np.ndarray] = []
@@ -131,7 +161,12 @@ def connected_components_8(mask: np.ndarray, min_cells: int = 3):
                 for dy, dx in nbrs:
                     ny = cy + dy
                     nx = cx + dx
-                    if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not visited[ny, nx]:
+                    if (
+                        0 <= ny < h
+                        and 0 <= nx < w
+                        and mask[ny, nx]
+                        and not visited[ny, nx]
+                    ):
                         visited[ny, nx] = 1
                         q.append((ny, nx))
 
@@ -177,22 +212,24 @@ def build_pois_from_clusters_no_sort(
         y0 = int(ys.min())
         y1 = int(ys.max()) + 1
 
-        pois.append({
-            "poi_id": int(poi_id),
-            "center_lat": lat_c,
-            "center_lon": lon_c,
-            "bbox": [
-                float(x_edges[x0]),
-                float(y_edges[y0]),
-                float(x_edges[x1]),
-                float(y_edges[y1]),
-            ],
-            "cells_count": int(cells.shape[0]),
-            "count_start": int(heat_start[ys, xs].sum()),
-            "count_end": int(heat_end[ys, xs].sum()),
-            "count_total": int(heat_total[ys, xs].sum()),
-            "top_destinations": [],
-        })
+        pois.append(
+            {
+                "poi_id": int(poi_id),
+                "center_lat": lat_c,
+                "center_lon": lon_c,
+                "bbox": [
+                    float(x_edges[x0]),
+                    float(y_edges[y0]),
+                    float(x_edges[x1]),
+                    float(y_edges[y1]),
+                ],
+                "cells_count": int(cells.shape[0]),
+                "count_start": int(heat_start[ys, xs].sum()),
+                "count_end": int(heat_end[ys, xs].sum()),
+                "count_total": int(heat_total[ys, xs].sum()),
+                "top_destinations": [],
+            }
+        )
 
     return pois
 
@@ -244,7 +281,9 @@ def pass2_assign_pois_and_collect(
     max_ts = None
 
     n = int(ds_tracks.shape[0])
-    for s in tqdm(range(0, n, chunk_rows), desc="Pass3: tracks -> POI assign", unit="chunk"):
+    for s in tqdm(
+        range(0, n, chunk_rows), desc="Pass3: tracks -> POI assign", unit="chunk"
+    ):
         e = min(n, s + chunk_rows)
         block = ds_tracks[s:e]
 
@@ -261,7 +300,24 @@ def pass2_assign_pois_and_collect(
         sts = block["start_timestamp"].astype(np.int64, copy=False)
         ets = block["end_timestamp"].astype(np.int64, copy=False)
 
-        mask &= np.isfinite(slat) & np.isfinite(slon) & np.isfinite(elat) & np.isfinite(elon)
+        mask &= (
+            np.isfinite(slat)
+            & np.isfinite(slon)
+            & np.isfinite(elat)
+            & np.isfinite(elon)
+        )
+        mask &= (
+            (slon >= min_lon)
+            & (slon <= max_lon)
+            & (slat >= min_lat)
+            & (slat <= max_lat)
+        )
+        mask &= (
+            (elon >= min_lon)
+            & (elon <= max_lon)
+            & (elat >= min_lat)
+            & (elat <= max_lat)
+        )
         if not np.any(mask):
             continue
 
@@ -269,8 +325,12 @@ def pass2_assign_pois_and_collect(
         part_sts = sts[mask]
         part_ets = ets[mask]
 
-        sy, sx = point_to_cell(slat[mask], slon[mask], min_lon, min_lat, inv_dx, inv_dy, nx, ny)
-        ey, ex = point_to_cell(elat[mask], elon[mask], min_lon, min_lat, inv_dx, inv_dy, nx, ny)
+        sy, sx = point_to_cell(
+            slat[mask], slon[mask], min_lon, min_lat, inv_dx, inv_dy, nx, ny
+        )
+        ey, ex = point_to_cell(
+            elat[mask], elon[mask], min_lon, min_lat, inv_dx, inv_dy, nx, ny
+        )
 
         sp = cell_to_poi[sy, sx].astype(np.int32, copy=False)
         ep = cell_to_poi[ey, ex].astype(np.int32, copy=False)
@@ -334,11 +394,18 @@ def collect_ts_lat_lon_tid_for_track_ids(
     lat_parts = []
     lon_parts = []
 
-    for path in tqdm(day_paths, desc="Pass4: positions scan (collect gaps)", unit="day"):
+    for path in tqdm(
+        day_paths, desc="Pass4: positions scan (collect gaps)", unit="day"
+    ):
         dset = ds[path]
         n = int(dset.shape[0])
 
-        for s in tqdm(range(0, n, chunk_rows), desc=f"Chunks {path[-10:]}", leave=False, unit="chunk"):
+        for s in tqdm(
+            range(0, n, chunk_rows),
+            desc=f"Chunks {path[-10:]}",
+            leave=False,
+            unit="chunk",
+        ):
             e = min(s + chunk_rows, n)
             block = dset[s:e]
 
@@ -396,7 +463,9 @@ def compute_gap_metrics(
     dt = ts[1:].astype(np.int64) - ts[:-1].astype(np.int64)
     dt_same = dt[same]
     dt_same = np.maximum(dt_same, 0)
-    dt_same_i32 = np.minimum(dt_same, np.iinfo(np.int32).max).astype(np.int32, copy=False)
+    dt_same_i32 = np.minimum(dt_same, np.iinfo(np.int32).max).astype(
+        np.int32, copy=False
+    )
 
     np.maximum.at(max_gap_sec, idx_same, dt_same_i32)
 
@@ -446,7 +515,12 @@ def collect_last_destination_per_track(
         dset = ds[path]
         n = int(dset.shape[0])
 
-        for s in tqdm(range(0, n, chunk_rows), desc=f"Chunks {path[-10:]}", leave=False, unit="chunk"):
+        for s in tqdm(
+            range(0, n, chunk_rows),
+            desc=f"Chunks {path[-10:]}",
+            leave=False,
+            unit="chunk",
+        ):
             e = min(s + chunk_rows, n)
             block = dset[s:e]
 
@@ -485,12 +559,16 @@ def normalize_dest(s: str) -> str:
 
 
 _BAD_DEST_EXACT = {
-    "CLASS A", "CLASS B", "CLASS C",
-    "UNKNOWN", "UNDEFINED", "NONE", "N/A", "NA",
+    "CLASS A",
+    "CLASS B",
+    "CLASS C",
+    "UNKNOWN",
+    "UNDEFINED",
+    "NONE",
+    "N/A",
+    "NA",
 }
-_BAD_DEST_PREFIX = (
-    "CLASS ",
-)
+_BAD_DEST_PREFIX = ("CLASS ",)
 
 
 def is_bad_destination(norm_s: str) -> bool:
@@ -504,7 +582,9 @@ def is_bad_destination(norm_s: str) -> bool:
     return False
 
 
-def aggregate_destinations_by_poi(track_to_pois: dict, last_dest_map: dict, min_len: int = 3):
+def aggregate_destinations_by_poi(
+    track_to_pois: dict, last_dest_map: dict, min_len: int = 3
+):
     poi_counters = defaultdict(Counter)
 
     for tid, (_, end_poi) in track_to_pois.items():
@@ -539,10 +619,7 @@ def fill_top_destinations(
         if len(merged) < top_n:
             merged += bad[: (top_n - len(merged))]
 
-        p["top_destinations"] = [
-            {"name": name, "count": int(c)}
-            for name, c in merged
-        ]
+        p["top_destinations"] = [{"name": name, "count": int(c)} for name, c in merged]
 
 
 def build_track_quality_dict(
@@ -575,12 +652,14 @@ def extract_poi_data(
 
         ds_tracks = ds["tracks"]
 
-        heat_start, heat_end, heat_total, x_edges, y_edges = build_start_end_heatmaps_tracks(
-            ds_tracks=ds_tracks,
-            extent=config.extent,
-            bins=config.bins,
-            chunk_rows=config.chunk_rows_tracks,
-            min_points=config.min_track_points,
+        heat_start, heat_end, heat_total, x_edges, y_edges = (
+            build_start_end_heatmaps_tracks(
+                ds_tracks=ds_tracks,
+                extent=config.extent,
+                bins=config.bins,
+                chunk_rows=config.chunk_rows_tracks,
+                min_points=config.min_track_points,
+            )
         )
 
         dense_mask, dense_thr = make_dense_mask(
@@ -621,7 +700,9 @@ def extract_poi_data(
             require_both=config.require_both_pois,
         )
 
-        track_ids_all = np.fromiter(track_to_pois.keys(), dtype=np.int64, count=len(track_to_pois))
+        track_ids_all = np.fromiter(
+            track_to_pois.keys(), dtype=np.int64, count=len(track_to_pois)
+        )
 
         track_quality = {}
         if track_ids_all.size > 0 and poi_min_ts is not None and poi_max_ts is not None:

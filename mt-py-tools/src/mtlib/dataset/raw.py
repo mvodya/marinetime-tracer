@@ -14,52 +14,64 @@ from tqdm import tqdm
 
 F_VER = "1.0"
 
-positions_dtype = np.dtype([
-    ("ship_id", "i8"),           # Внутренний идентификатор судна
-    ("timestamp", "i4"),         # Время отчета
-    ("lat", "f4"),               # Широта (WGS-84), в градусах
-    ("lon", "f4"),               # Долгота (WGS-84), в градусах
-    ("speed", "i4"),             # Скорость над грунтом (Speed over ground) в узлах
-    ("course", "i4"),            # Курс (Course over ground) (в градусах)
-    ("heading", "i4"),           # Направление носа судна (Heading), целое (в градусах)
-    ("rot", "i4"),               # Rate of Turn (изменение курса), в AIS шкале (-127..127)
-    ("elapsed", "i4"),           # Время с последнего отчета (секунды)
-    ("destination", "S64"),      # Указанный порт/пункт назначения (текст, неформализован)
-    ("tile_z", "i4"),            # Уровень зума тайла Marine Traffic
-    ("file_id", "i4"),           # Индекс файла в таблице `/files`, откуда поступила запись
-    ("track_id", "i8"),          # Идентификатор трека (маршрута)
-])
+positions_dtype = np.dtype(
+    [
+        ("ship_id", "i8"),  # Внутренний идентификатор судна
+        ("timestamp", "i4"),  # Время отчета
+        ("lat", "f4"),  # Широта (WGS-84), в градусах
+        ("lon", "f4"),  # Долгота (WGS-84), в градусах
+        ("speed", "i4"),  # Скорость над грунтом (Speed over ground) в узлах
+        ("course", "i4"),  # Курс (Course over ground) (в градусах)
+        ("heading", "i4"),  # Направление носа судна (Heading), целое (в градусах)
+        ("rot", "i4"),  # Rate of Turn (изменение курса), в AIS шкале (-127..127)
+        ("elapsed", "i4"),  # Время с последнего отчета (секунды)
+        (
+            "destination",
+            "S64",
+        ),  # Указанный порт/пункт назначения (текст, неформализован)
+        ("tile_z", "i4"),  # Уровень зума тайла Marine Traffic
+        ("file_id", "i4"),  # Индекс файла в таблице `/files`, откуда поступила запись
+        ("track_id", "i8"),  # Идентификатор трека (маршрута)
+    ]
+)
 
-ships_dtype = np.dtype([
-    ("ship_id", "i8"),           # Внутренний уникальный идентификатор
-    ("mt_id", "S128"),           # Marinetraffic ID
-    ("name", "S128"),            # Название судна
-    ("flag", "S4"),              # ISO-код страны флага (например, "RU", "CN")
-    ("ship_type", "i4"),         # AIS raw ship type
-    ("gt_ship_type", "i4"),      # Нормализованный/кластеризованный тип судна
-    ("length", "i4"),            # Длина судна (в метрах)
-    ("width", "i4"),             # Ширина судна (в метрах)
-    ("dwt", "i4"),               # Deadweight tonnage - дедвейт, тоннаж
-])
+ships_dtype = np.dtype(
+    [
+        ("ship_id", "i8"),  # Внутренний уникальный идентификатор
+        ("mt_id", "S128"),  # Marinetraffic ID
+        ("name", "S128"),  # Название судна
+        ("flag", "S4"),  # ISO-код страны флага (например, "RU", "CN")
+        ("ship_type", "i4"),  # AIS raw ship type
+        ("gt_ship_type", "i4"),  # Нормализованный/кластеризованный тип судна
+        ("length", "i4"),  # Длина судна (в метрах)
+        ("width", "i4"),  # Ширина судна (в метрах)
+        ("dwt", "i4"),  # Deadweight tonnage - дедвейт, тоннаж
+    ]
+)
 
-tracks_dtype = np.dtype([
-    ("track_id", "i8"),          # Уникальный ID трека
-    ("ship_id", "i8"),           # Идентификатор судна
-    ("start_timestamp", "i4"),   # Время начала трека
-    ("end_timestamp", "i4"),     # Время окончания трека
-    ("start_lat", "f4"),         # Координаты начальной точки трека
-    ("start_lon", "f4"),
-    ("end_lat", "f4"),           # Координаты финальной точки трека
-    ("end_lon", "f4"),
-    ("points_count", "i4"),      # Количество точек в треке
-])
+tracks_dtype = np.dtype(
+    [
+        ("track_id", "i8"),  # Уникальный ID трека
+        ("ship_id", "i8"),  # Идентификатор судна
+        ("start_timestamp", "i4"),  # Время начала трека
+        ("end_timestamp", "i4"),  # Время окончания трека
+        ("start_lat", "f4"),  # Координаты начальной точки трека
+        ("start_lon", "f4"),
+        ("end_lat", "f4"),  # Координаты финальной точки трека
+        ("end_lon", "f4"),
+        ("points_count", "i4"),  # Количество точек в треке
+    ]
+)
 
-files_dtype = np.dtype([
-    ("file_id", "i4"),           # Уникальный идентификатор файла
-    ("name", "S256"),            # Имя файла
-    ("positions_count", "i4"),   # Кол-во записей в файле
-    ("timestamp", "i4"),         # Время парсинга
-])
+files_dtype = np.dtype(
+    [
+        ("file_id", "i4"),  # Уникальный идентификатор файла
+        ("name", "S256"),  # Имя файла
+        ("positions_count", "i4"),  # Кол-во записей в файле
+        ("timestamp", "i4"),  # Время парсинга
+    ]
+)
+
 
 def _to_bytes(value: str | bytes | None, default: str = "null") -> bytes:
     if value is None:
@@ -74,6 +86,17 @@ def safe_int(value, default: int = -1) -> int:
         return int(value) if value is not None else default
     except (ValueError, TypeError):
         return default
+
+
+def parse_required_timestamp(value) -> int | None:
+    try:
+        if value is None:
+            return None
+        ts = int(value)
+    except (ValueError, TypeError):
+        return None
+
+    return ts if ts > 0 else None
 
 
 def get_folder_stats(path: str | Path) -> tuple[float, int]:
@@ -91,8 +114,9 @@ def get_folder_stats(path: str | Path) -> tuple[float, int]:
             except OSError:
                 continue
 
-    size_gb = total_size / (1024 ** 3)
+    size_gb = total_size / (1024**3)
     return size_gb, file_count
+
 
 def get_json_files_by_date_range(
     root_dir: str | Path,
@@ -108,7 +132,12 @@ def get_json_files_by_date_range(
     current = start
 
     while current <= end:
-        dir_path = root_dir / f"{current.year:04d}" / f"{current.month:02d}" / f"{current.day:02d}"
+        dir_path = (
+            root_dir
+            / f"{current.year:04d}"
+            / f"{current.month:02d}"
+            / f"{current.day:02d}"
+        )
         if dir_path.exists():
             result.extend(sorted(dir_path.glob("*.json")))
         current += timedelta(days=1)
@@ -139,7 +168,9 @@ def create_empty_hdf5(
         h5.attrs["version"] = version
         h5.attrs["author"] = author
         h5.attrs["sources_count"] = sources_count
-        h5.attrs["sources_size"] = f"{sources_size_gb:.3f} GB" if sources_size_gb >= 0 else "unknown"
+        h5.attrs["sources_size"] = (
+            f"{sources_size_gb:.3f} GB" if sources_size_gb >= 0 else "unknown"
+        )
 
         h5.create_dataset(
             "ships",
@@ -262,52 +293,63 @@ def build_hdf5_from_archive(
     iterator = tqdm(files, desc="Parsing JSON files") if show_progress else files
 
     with h5py.File(output_path, "a") as h5file:
+        skipped_invalid_timestamp = 0
         for file_path in iterator:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             records_count = len(data)
-            files_batch.append((
-                file_id,
-                _to_bytes(file_path.name, default=""),
-                records_count,
-                int(time.time()),
-            ))
+            files_batch.append(
+                (
+                    file_id,
+                    _to_bytes(file_path.name, default=""),
+                    records_count,
+                    int(time.time()),
+                )
+            )
 
             for mt_id, record in data.items():
                 if mt_id not in mt_id_storage:
                     mt_id_storage[mt_id] = next_ship_id
                     next_ship_id += 1
 
-                    ships_batch.append((
-                        mt_id_storage[mt_id],
-                        _to_bytes(mt_id, default=""),
-                        _to_bytes(record.get("SHIPNAME", "null")),
-                        _to_bytes(record.get("FLAG", "null")),
-                        safe_int(record.get("SHIPTYPE", -1)),
-                        safe_int(record.get("GT_SHIPTYPE", -1)),
-                        safe_int(record.get("LENGTH", -1)),
-                        safe_int(record.get("WIDTH", -1)),
-                        safe_int(record.get("DWT", -1)),
-                    ))
+                    ships_batch.append(
+                        (
+                            mt_id_storage[mt_id],
+                            _to_bytes(mt_id, default=""),
+                            _to_bytes(record.get("SHIPNAME", "null")),
+                            _to_bytes(record.get("FLAG", "null")),
+                            safe_int(record.get("SHIPTYPE", -1)),
+                            safe_int(record.get("GT_SHIPTYPE", -1)),
+                            safe_int(record.get("LENGTH", -1)),
+                            safe_int(record.get("WIDTH", -1)),
+                            safe_int(record.get("DWT", -1)),
+                        )
+                    )
 
                 ship_id = mt_id_storage[mt_id]
+                timestamp = parse_required_timestamp(record.get("TIMESTAMP"))
+                if timestamp is None:
+                    skipped_invalid_timestamp += 1
+                    continue
 
-                positions_batch.append((
-                    ship_id,
-                    safe_int(record.get("TIMESTAMP"), 0),
-                    float(record["LAT"]),
-                    float(record["LON"]),
-                    safe_int(record.get("SPEED", -1)),
-                    safe_int(record.get("COURSE", -1)),
-                    safe_int(record.get("HEADING", -1)),
-                    safe_int(record.get("ROT", 0)),
-                    safe_int(record.get("ELAPSED", 0)),
-                    _to_bytes(record.get("DESTINATION", "null")),
-                    safe_int(record.get("TILE_Z", -1)),
-                    file_id,
-                    -1,
-                ))
+                positions_batch.append(
+                    (
+                        ship_id,
+                        timestamp,
+                        float(record["LAT"]),
+                        float(record["LON"]),
+                        safe_int(record.get("SPEED", -1)),
+                        safe_int(record.get("COURSE", -1)),
+                        safe_int(record.get("HEADING", -1)),
+                        safe_int(record.get("ROT", 0)),
+                        safe_int(record.get("ELAPSED", 0)),
+                        _to_bytes(record.get("DESTINATION", "null")),
+                        safe_int(record.get("TILE_Z", -1)),
+                        file_id,
+                        -1,
+                    )
+                )
 
             file_id += 1
 
@@ -315,5 +357,6 @@ def build_hdf5_from_archive(
                 _flush_batches(h5file, ships_batch, positions_batch, files_batch)
 
         _flush_batches(h5file, ships_batch, positions_batch, files_batch)
+        h5file.attrs["skipped_invalid_timestamp"] = int(skipped_invalid_timestamp)
 
     return output_path
