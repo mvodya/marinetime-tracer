@@ -45,6 +45,32 @@ from .geo import (
 )
 
 
+from .postprocess import (
+    CorridorBuildResult,
+    RouteExtractionArtifacts,
+    RouteExtractionConfig,
+    RouteExtractionResult,
+    astar_grid_path,
+    build_hysteresis_corridor,
+    build_skeleton_graph,
+    cells_to_latlon,
+    closest_graph_node,
+    extract_route_from_prob_map,
+    make_anchor_mask,
+    path_to_mask,
+    point_to_grid_cell,
+    zhang_suen_thinning,
+)
+
+
+from .infer import (
+    predict_and_extract_route,
+    predict_dataset_routes,
+    predict_example_prob_map,
+    predict_prob_map,
+)
+
+
 from .checkpoints import load_checkpoint, save_checkpoint, save_history_csv
 
 
@@ -60,7 +86,14 @@ from .train import (
     train_one_epoch,
     validate,
 )
-from .visualize import make_preview_figure, save_preview_png
+from .visualize import (
+    make_preview_figure,
+    make_route_comparison_figure,
+    make_route_extraction_grid_figure,
+    save_preview_png,
+    save_route_comparison_png,
+    set_map_style,
+)
 
 
 __all__ = [
@@ -101,6 +134,24 @@ __all__ = [
     "sample_gaps",
     "split_track_into_segments",
     "window_for_fragment",
+    "CorridorBuildResult",
+    "RouteExtractionArtifacts",
+    "RouteExtractionConfig",
+    "RouteExtractionResult",
+    "astar_grid_path",
+    "build_hysteresis_corridor",
+    "build_skeleton_graph",
+    "cells_to_latlon",
+    "closest_graph_node",
+    "extract_route_from_prob_map",
+    "make_anchor_mask",
+    "path_to_mask",
+    "point_to_grid_cell",
+    "zhang_suen_thinning",
+    "predict_and_extract_route",
+    "predict_dataset_routes",
+    "predict_example_prob_map",
+    "predict_prob_map",
     "CombinedBCEDiceLoss",
     "SoftDiceLoss",
     "estimate_pos_weight",
@@ -114,5 +165,9 @@ __all__ = [
     "train_one_epoch",
     "validate",
     "make_preview_figure",
+    "make_route_comparison_figure",
+    "make_route_extraction_grid_figure",
     "save_preview_png",
+    "save_route_comparison_png",
+    "set_map_style",
 ]
