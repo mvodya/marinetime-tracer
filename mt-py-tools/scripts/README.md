@@ -20,6 +20,7 @@ POI_JSON=data/poi.json
 ARTIFACT_DIR=data/track_restore_artifacts
 TRAIN_OUT=runs/track_restore_v1
 EVAL_OUT=runs/track_restore_v1_eval
+ROUTE_PREVIEW_OUT=runs/track_restore_routes_preview
 ```
 
 ## Подготовка датасета
@@ -114,5 +115,18 @@ python3 mt-py-tools/scripts/nn-track-restore/eval_track_restore.py \
   --split val \
   --batch-size 16 \
   --num-workers 4 \
+  --device cuda
+```
+
+5. `preview_track_restore_routes.py` для проверки полного пайплайна восстановления маршрута
+
+```bash
+python3 mt-py-tools/scripts/nn-track-restore/preview_track_restore_routes.py \
+  "$TSORTED_H5" \
+  "$ARTIFACT_DIR" \
+  "$TRAIN_OUT/checkpoints/best.pt" \
+  --out-dir "$ROUTE_PREVIEW_OUT" \
+  --split val \
+  --count 10 \
   --device cuda
 ```
